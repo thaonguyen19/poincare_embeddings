@@ -7,7 +7,7 @@
 #
 import torch as th
 import numpy as np
-import logging
+#import logging
 import argparse
 from torch.autograd import Variable
 from collections import defaultdict as ddict
@@ -45,7 +45,7 @@ def ranking(types, model, distfn):
     return np.mean(ranks), np.mean(ap_scores)
 
 
-def control(queue, log, types, data, fout, distfn, nepochs, processes):
+def control(queue, types, data, fout, distfn, nepochs, processes):
     min_rank = (np.Inf, -1)
     max_map = (0, -1)
     while True:
@@ -70,29 +70,14 @@ def control(queue, log, types, data, fout, distfn, nepochs, processes):
                 min_rank = (mrank, epoch)
             if mAP > max_map[0]:
                 max_map = (mAP, epoch)
-            log.info(
-                ('eval: {'
-                 '"epoch": %d, '
-                 '"elapsed": %.2f, '
-                 '"loss": %.3f, '
-                 '"mean_rank": %.2f, '
-                 '"mAP": %.4f, '
-                 '"best_rank": %.2f, '
-                 '"best_mAP": %.4f}') % (
-                     epoch, elapsed, loss, mrank, mAP, min_rank[0], max_map[0])
-            )
+            print("EVAL: epoch %d  elapsed %.2f  loss %.3f  mean_rank %.2f  mAP %.4f  best_rank %.2f  best_mAP %.4f" \
+                    % (epoch, elapsed, loss, mrank, mAP, min_rank[0], max_map[0]))
+
         else:
-            log.info(f'json_log: {{"epoch": {epoch}, "loss": {loss}, "elapsed": {elapsed}}}')
+            print("json_log: epoch %d  elapsed %.2f  loss %.3f" % (epoch, elapsed, loss))
+
         if epoch >= nepochs - 1:
-            log.info(
-                ('results: {'
-                 '"mAP": %g, '
-                 '"mAP epoch": %d, '
-                 '"mean rank": %g, '
-                 '"mean rank epoch": %d'
-                 '}') % (
-                     max_map[0], max_map[1], min_rank[0], min_rank[1])
-            )
+            print("results: mAP %g  mAP epoch %d  mean rank %g  mean rank epoch %d" % (max_map[0], max_map[1], min_rank[0], min_rank[1]))
             break
 
 
@@ -110,16 +95,16 @@ if __name__ == '__main__':
     parser.add_argument('-ndproc', help='Number of data loading processes', type=int, default=2)
     parser.add_argument('-eval_each', help='Run evaluation each n-th epoch', type=int, default=10)
     parser.add_argument('-burnin', help='Duration of burn in', type=int, default=20)
-    parser.add_argument('-debug', help='Print debug output', action='store_true', default=False)
+    #parser.add_argument('-debug', help='Print debug output', action='store_true', default=False)
     opt = parser.parse_args()
 
     th.set_default_tensor_type('torch.FloatTensor')
-    if opt.debug:
-        log_level = logging.DEBUG
-    else:
-        log_level = logging.INFO
-    log = logging.getLogger('poincare-nips17')
-    logging.basicConfig(level=log_level, format='%(message)s', stream=sys.stdout)
+    # if opt.debug:
+    #     log_level = logging.DEBUG
+    # else:
+    #     log_level = logging.INFO
+    # log = logging.getLogger('poincare-nips17')
+    # logging.basicConfig(level=log_level, format='%(message)s', stream=sys.stdout)
     idx, objects = slurp(opt.dset)
 
     # create adjacency list for evaluation
@@ -148,14 +133,13 @@ if __name__ == '__main__':
 
     # Build config string for log
     conf = [
-        ('distfn', '"{:s}"'),
-        ('dim', '{:d}'),
-        ('lr', '{:g}'),
-        ('batchsize', '{:d}'),
-        ('negs', '{:d}'),
-    ] + conf
-    conf = ', '.join(['"{}": {}'.format(k, f).format(getattr(opt, k)) for k, f in conf])
-    log.info(f'json_conf: {{{conf}}}')
+            'distfn ' + opt.distfn,
+            'dim ' + opt.dim,
+            'lr ' + opt.lr,
+            'batchsize ' + opt.batchsize,
+            'negs ' + opt.negs
+            ] + conf
+    print("json_conf: " + ', '.join(conf))
 
     # initialize optimizer
     optimizer = RiemannianSGD(
@@ -167,7 +151,7 @@ if __name__ == '__main__':
 
     # if nproc == 0, run single threaded, otherwise run Hogwild
     if opt.nproc == 0:
-        train.train(model, data, optimizer, opt, log, 0)
+        train.train(model, data, optimizer, opt, 0)
     else:
         queue = mp.Manager().Queue()
         model.share_memory()
@@ -175,14 +159,14 @@ if __name__ == '__main__':
         for rank in range(opt.nproc):
             p = mp.Process(
                 target=train.train_mp,
-                args=(model, data, optimizer, opt, log, rank + 1, queue)
+                args=(model, data, optimizer, opt, rank + 1, queue)
             )
             p.start()
             processes.append(p)
 
         ctrl = mp.Process(
             target=control,
-            args=(queue, log, adjacency, data, opt.fout, distfn, opt.epochs, processes)
+            args=(queue, adjacency, data, opt.fout, distfn, opt.epochs, processes)
         )
         ctrl.start()
         ctrl.join()

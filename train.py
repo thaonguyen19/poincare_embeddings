@@ -14,15 +14,15 @@ import gc
 _lr_multiplier = 0.01
 
 
-def train_mp(model, data, optimizer, opt, log, rank, queue):
+def train_mp(model, data, optimizer, opt, rank, queue):
     try:
-        train(model, data, optimizer, opt, log, rank, queue)
+        train(model, data, optimizer, opt, rank, queue)
     except Exception as err:
-        log.exception(err)
+        print(err)
         queue.put(None)
 
 
-def train(model, data, optimizer, opt, log, rank=1, queue=None):
+def train(model, data, optimizer, opt, rank=1, queue=None):
     # setup parallel data loader
     loader = DataLoader(
         data,
@@ -42,7 +42,7 @@ def train(model, data, optimizer, opt, log, rank=1, queue=None):
             data.burnin = True
             lr = opt.lr * _lr_multiplier
             if rank == 1:
-                log.info(f'Burnin: lr={lr}')
+                print('Burnin: lr=%f' %(lr))
         for inputs, targets in loader:
             elapsed = timeit.default_timer() - t_start
             optimizer.zero_grad()
@@ -60,10 +60,5 @@ def train(model, data, optimizer, opt, log, rank=1, queue=None):
                     (epoch, elapsed, np.mean(epoch_loss), emb)
                 )
             else:
-                log.info(
-                    'info: {'
-                    f'"elapsed": {elapsed}, '
-                    f'"loss": {np.mean(epoch_loss)}, '
-                    '}'
-                )
+                print('elapsed: %.2f   loss: %.3f' % (elapsed, np.mean(epoch_loss)))
         gc.collect()
