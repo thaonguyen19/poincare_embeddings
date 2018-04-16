@@ -126,7 +126,7 @@ if __name__ == '__main__':
         distfn = model.TranseDistance
         opt.rgrad = rsgd.euclidean_grad
     else:
-        raise ValueError(f'Unknown distance function {opt.distfn}')
+        raise ValueError('Unknown distance function ' + opt.distfn)
 
     # initialize model and data
     model, data, model_name, conf = model.SNGraphDataset.initialize(distfn, opt, idx, objects)
@@ -134,10 +134,10 @@ if __name__ == '__main__':
     # Build config string for log
     conf = [
             'distfn ' + opt.distfn,
-            'dim ' + opt.dim,
-            'lr ' + opt.lr,
-            'batchsize ' + opt.batchsize,
-            'negs ' + opt.negs
+            'dim ' + str(opt.dim),
+            'lr ' + str(opt.lr),
+            'batchsize ' + str(opt.batchsize),
+            'negs ' + str(opt.negs)
             ] + conf
     print("json_conf: " + ', '.join(conf))
 

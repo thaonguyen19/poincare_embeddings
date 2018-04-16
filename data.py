@@ -79,7 +79,6 @@ def slurp(fin, fparse=parse_line, symmetrize=False):
 
     subs = []
     for i, j, w in iter_line(fin, fparse, length=2):
-        print(i, j, w)
         if i == j:
             continue
         subs.append((enames[i], enames[j], w))

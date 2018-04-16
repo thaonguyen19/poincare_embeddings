@@ -22,7 +22,7 @@ python3 embed.py \
        -burnin 20 \
        -nproc "${NTHREADS}" \
        -distfn poincare \
-       -dset wordnet/noun_closure.tsv \
-       -fout nouns.pth \
+       -dset package/all_package_pairs.tsv \
+       -fout packages.pth \
        -batchsize 50 \
        -eval_each 100 \
