@@ -22,7 +22,7 @@ python3 embed.py \
        -burnin 20 \
        -nproc "${NTHREADS}" \
        -distfn poincare \
-       -dset package/all_package_pairs.tsv \
+       -dset package/package_train.tsv \
        -fout packages.pth \
        -batchsize 50 \
        -eval_each 100 \

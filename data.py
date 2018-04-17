@@ -12,7 +12,34 @@ import numpy as np
 import torch as th
 
 
-def generate_pairs(package_file, sep='.'): 
+def generate_train_val(package_file_sorted, sep='.'):
+    val_candidates = []
+    with open(package_file_sorted, 'r') as f:
+        cnt = 0
+        prev_line = None
+        for line in f:
+            if len(line.strip().split(sep)) > 1: #not root
+                if prev_line is not None and prev_line in line: #not leaf
+                    val_candidates.append(cnt-1)
+
+            prev_line = line.strip()
+            cnt += 1
+
+    n_val = int(0.2 * cnt)
+    val_lines = list(np.random.choice(val_candidates, n_val))
+    with open('./package/functions_train', 'w') as train_f:
+        with open('./package/functions_val', 'w') as val_f:
+            with open(package_file_sorted, 'r') as f:
+                cnt = 0
+                for line in f:
+                    if cnt in val_lines:
+                        val_f.write(line)
+                    else:
+                        train_f.write(line)
+                    cnt += 1
+
+
+def generate_pairs(package_file, dataset, sep='.'): 
     mapping = ddict(set) #map from higher order element to the all direct children in the hierarchy
     all_names = set()
     duplicate = set()
@@ -27,7 +54,7 @@ def generate_pairs(package_file, sep='.'):
                 high, low = package_names[i], package_names[i+1]
                 mapping[high].add(low)
 
-    with open('./package/all_package_pairs.tsv', 'w') as fout:
+    with open('./package/package_'+dataset+'.tsv', 'w') as fout:
         for k, v_set in mapping.items():
             for v in v_set:
                 old_len = len(all_names)
@@ -37,7 +64,7 @@ def generate_pairs(package_file, sep='.'):
                     duplicate.add(v)
                 fout.write(str(v) + '\t' + str(k) + '\n') #more specific package comes first
 
-    with open('./package/duplicate_packages.tsv', 'w') as fdup:
+    with open('./package/duplicate_packages_'+dataset+'.tsv', 'w') as fdup:
         for i in duplicate:
             fdup.write(str(i) + '\n')
 
@@ -94,4 +121,6 @@ def slurp(fin, fparse=parse_line, symmetrize=False):
 
 if __name__ == '__main__':
     #slurp('test.tsv')
-    generate_pairs('./package/functions')
+    generate_train_val('./package/functions_sorted') #use command line sort <init file> -o <sorted file> to obtain a sorted file
+    generate_pairs('./package/functions_train', 'train')
+    #generate_pairs('./package/functions_val', 'val')
