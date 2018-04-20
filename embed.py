@@ -20,7 +20,20 @@ import gc
 import sys
 
 
-def ranking(types, model, distfn):
+# def eval_sanity_check(val_filename, model, distfn, n_top=5): #print n_top top ranked entries
+#     #how to compute dist given a linkage of packages
+#     #for each import, go through all other imports (starting from sklearn), as long as it exceeds the min_dist, break and move on the next search
+#     all_val_strs = []
+#     with open(val_filename, 'r') as f:
+#         for line in f:
+#             all_val_strs.append(line.strip())
+#     for s in all_val_strs:
+#         max_sim = None
+#         n_top_candidates = [''] * n_top
+#         #start computing dist
+
+
+def ranking(types, model, distfn): #types here is adjacency matrix
     lt = th.from_numpy(model.embedding())
     embedding = Variable(lt, volatile=True)
     ranks = []
@@ -32,11 +45,11 @@ def ranking(types, model, distfn):
         _labels = np.zeros(embedding.size(0))
         _dists_masked = _dists.copy()
         _ranks = []
-        for o in s_types:
+        for o, w in s_types.items():
             _dists_masked[o] = np.Inf
-            _labels[o] = 1
+            _labels[o] = w
         ap_scores.append(average_precision_score(_labels, -_dists))
-        for o in s_types:
+        for o, w in s_types.items():
             d = _dists_masked.copy()
             d[o] = _dists[o]
             r = np.argsort(d)
@@ -108,10 +121,10 @@ if __name__ == '__main__':
     idx, objects = slurp(opt.dset)
 
     # create adjacency list for evaluation
-    adjacency = ddict(set)
+    adjacency = ddict(dict)
     for i in range(len(idx)):
-        s, o, _ = idx[i]
-        adjacency[s].add(o)
+        s, o, w = idx[i]
+        adjacency[s][o] = w
     adjacency = dict(adjacency)
 
     # setup Riemannian gradients for distances
