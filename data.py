@@ -5,15 +5,22 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 #
-
 from itertools import count
 from collections import defaultdict as ddict
 import numpy as np
 import torch as th
+import itertools
+
+DEFAULT_WEIGHT = 2
 
 
 def generate_train_val(package_file_sorted, sep='.'):
+    #package_file_sorted name has format "*_sorted" --> output "*_train", "*_val"
+    assert('sorted' in package_file_sorted)
+    sorted_train_file = package_file_sorted[:-6]+'train'
+    sorted_val_file = package_file_sorted[:-6]+'val'
     val_candidates = []
+
     with open(package_file_sorted, 'r') as f:
         cnt = 0
         prev_line = None
@@ -25,10 +32,10 @@ def generate_train_val(package_file_sorted, sep='.'):
             prev_line = line.strip()
             cnt += 1
 
-    n_val = int(0.2 * cnt)
+    n_val = 1000 #int(0.2 * cnt)
     val_lines = list(np.random.choice(val_candidates, n_val))
-    with open('./package/functions_train', 'w') as train_f:
-        with open('./package/functions_val', 'w') as val_f:
+    with open(sorted_train_file, 'w') as train_f:
+        with open(sorted_val_file, 'w') as val_f:
             with open(package_file_sorted, 'r') as f:
                 cnt = 0
                 for line in f:
@@ -37,12 +44,14 @@ def generate_train_val(package_file_sorted, sep='.'):
                     else:
                         train_f.write(line)
                     cnt += 1
+    return sorted_train_file, sorted_val_file
 
 
 def generate_pairs(package_file, dataset, sep='.'): 
+    #package_file name has format "*_train"
     mapping = ddict(set) #map from higher order element to the all direct children in the hierarchy
     all_names = set()
-    duplicate = set()
+    duplicate = set() #assume the immediate parent package names would be different
 
     with open(package_file, 'r') as f:
         for line in f:
@@ -54,7 +63,8 @@ def generate_pairs(package_file, dataset, sep='.'):
                 high, low = package_names[i], package_names[i+1]
                 mapping[high].add(low)
 
-    with open('./package/package_'+dataset+'.tsv', 'w') as fout:
+    tsv_package_file = package_file[:(-1*len(dataset))]+dataset+'.tsv'
+    with open(tsv_package_file, 'w') as fout:
         for k, v_set in mapping.items():
             for v in v_set:
                 old_len = len(all_names)
@@ -62,18 +72,51 @@ def generate_pairs(package_file, dataset, sep='.'):
                 new_len = len(all_names)
                 if old_len == new_len: #duplicate element
                     duplicate.add(v)
-                fout.write(str(v) + '\t' + str(k) + '\n') #more specific package comes first
+                else: #don't add duplicate elements for now
+                    fout.write(v + '\t' + k + '\n') #more specific package comes first
 
-    with open('./package/duplicate_packages_'+dataset+'.tsv', 'w') as fdup:
+    duplicate_file_name = package_file[:(-1*len(dataset))]+'_duplicate_'+dataset
+    with open(duplicate_file_name, 'w') as fdup:
         for i in duplicate:
             fdup.write(str(i) + '\n')
+
+    return duplicate, duplicate_file_name, tsv_package_file
+
+
+def get_duplicate(duplicate_file_name):
+    result = []
+    with open(duplicate_file_name, 'r') as fdup:
+        for line in file:
+            result.append(line.strip())
+    return result
+
+
+def process_duplicate(duplicate_set, file_read, file_write, sep='.'):
+    w = int(DEFAULT_WEIGHT/2)
+    duplicate_dict = ddict(list)
+
+    with open(file_read, 'r') as fin:
+        for line in fin:
+            tokens = line.strip().split(sep)
+            if tokens[-1] in duplicate_set:
+                if len(tokens) < 2:
+                    continue
+                renamed_token = tokens[-1] + '_' + tokens[-2]
+                duplicate_dict[tokens[-1]].append(renamed_token)
+
+    with open(file_write, 'a') as fout:
+        for token, renamed_token_list in duplicate_dict.items():
+            for pair in itertools.combinations(renamed_token_list, 2):
+                fout.write(pair[0] + '\t' + pair[1] + '\t' + str(w) + '\n')
+                if pair[0] != pair[1]:
+                    fout.write(pair[1] + '\t' + pair[0] + '\t' + str(w) + '\n')
 
 
 def parse_line(line, length=2, sep='\t'):
     #each line is either (head, tail) or (head, tail, weight). Return tuple of (head, tail, weight)
     d = line.strip().split(sep)
     if len(d) == length:
-        w = 1
+        w = DEFAULT_WEIGHT
     elif len(d) == length + 1:
         w = int(d[-1])
         d = d[:-1]
@@ -120,7 +163,8 @@ def slurp(fin, fparse=parse_line, symmetrize=False):
 
 
 if __name__ == '__main__':
-    #slurp('test.tsv')
-    generate_train_val('./package/functions_sorted') #use command line sort <init file> -o <sorted file> to obtain a sorted file
-    generate_pairs('./package/functions_train', 'train')
-    #generate_pairs('./package/functions_val', 'val')
+    ### use command line sort <init file> -o <sorted file> to obtain a sorted file
+    package_file_sorted = './package/functions_04182018_sorted' 
+    sorted_train_file, sorted_val_file = generate_train_val(package_file_sorted) 
+    duplicate_set, duplicate_file_name, tsv_package_file = generate_pairs(sorted_train_file, 'train')
+    process_duplicate(duplicate_set, package_file_sorted, tsv_package_file)
