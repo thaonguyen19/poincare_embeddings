@@ -25,13 +25,15 @@ def check_cycle(dataset):
 	cycle_node_names = []
 
 	while True:
-		cycle = nx.find_cycle(G)
-		if len(cycle) == 0:
-			break
-		else:
+		try:
+			cycle = nx.find_cycle(G)
 			for e in cycle:
 				cycle_nodes.add(e[0])
 				G.remove_edge(*e)
+				
+		except nx.NetworkXNoCycle as e:
+			print(e)
+			break	
 
 	for i in cycle_nodes:
 		cycle_node_names.append(enames_inv[i])

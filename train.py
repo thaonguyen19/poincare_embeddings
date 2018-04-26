@@ -32,7 +32,7 @@ def train(model, data, optimizer, opt, rank=1, queue=None):
         collate_fn=data.collate
     )
 
-    for epoch in range(opt.epochs):
+    for epoch in range(1, opt.epochs+1):
         epoch_loss = []
         loss = None
         data.burnin = False
