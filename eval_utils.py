@@ -31,7 +31,7 @@ def check_cycle(dataset):
 		else:
 			for e in cycle:
 				cycle_nodes.add(e[0])
-				G.remove_edge(e)
+				G.remove_edge(*e)
 
 	for i in cycle_nodes:
 		cycle_node_names.append(enames_inv[i])
@@ -123,4 +123,4 @@ def find_shortest_path(node1, node2, adjacency_matrix):
 
 
 if __name__ == '__main__':
-	check_cycle('./package/functions_04182018.tsv')
+	check_cycle('./package/functions_04182018_train_wo_duplicate.tsv')

@@ -14,11 +14,12 @@ import itertools
 DEFAULT_WEIGHT = 2
 
 def generate_debug_set(package_file_sorted, n_test=300):
-    debug_file_name = package_file_sorted[-6] + 'debug_sorted'
+    debug_file_name = package_file_sorted[:-6] + 'debug_sorted'
     with open(package_file_sorted, 'r') as f:
         all_lines = f.readlines()
         test_lines = list(np.random.choice(all_lines, n_test))
         with open(debug_file_name, 'w') as fout:
+            print(debug_file_name)
             for l in test_lines:
                 fout.write(l)
     return debug_file_name
@@ -83,12 +84,12 @@ def generate_pairs(package_file, dataset, sep='.'):
                     old_len = len(all_names)
                     all_names.add(v)
                     new_len = len(all_names)
-                    fout_wo.write(v + '\t' + k + '\n')
 
                     if old_len == new_len: #duplicate element
                         duplicate.add(v)
                     else: #don't add duplicate elements for now
                         fout.write(v + '\t' + k + '\n') #more specific package comes first
+                        fout_wo.write(v + '\t' + k + '\n')
 
     duplicate_file_name = package_file[:-6]+'duplicate_'+dataset
     with open(duplicate_file_name, 'w') as fdup:
@@ -107,7 +108,7 @@ def get_duplicate(duplicate_file_name):
 
 
 def process_duplicate(duplicate_set, file_read, file_write, sep='.'):
-    w = int(DEFAULT_WEIGHT/2)
+    w = int(DEFAULT_WEIGHT/1)
     duplicate_dict = ddict(list)
 
     with open(file_read, 'r') as fin:

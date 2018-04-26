@@ -131,12 +131,13 @@ class GraphDataset(Dataset):
     _ntries = 10
     _dampening = 1
 
-    def __init__(self, idx, objects, nnegs, unigram_size=1e8):
+    def __init__(self, idx, objects, enames, nnegs, unigram_size=1e8):
         print('Indexing data')
         self.idx = idx
         self.nnegs = nnegs
         self.burnin = False
         self.objects = objects
+        self.enames = enames
         self.max_tries = self.nnegs * self._ntries
 
         self._weights = ddict(lambda: ddict(int))
@@ -193,18 +194,19 @@ class SNGraphDataset(GraphDataset):
         return th.LongTensor(ix).view(1, len(ix)), th.zeros(1).long()
 
     @classmethod
-    def initialize(cls, distfn, opt, idx, objects, max_norm=1):
+    def initialize(cls, distfn, opt, idx, objects, enames, max_norm=1):
         conf = []
         dset_name = opt.dset.split('/')[-1]
         if '.tsv' in dset_name:
             dset_name = dset_name[:-4]
         model_name = cls.model_name % (dset_name, opt.distfn, opt.dim)
-        data = cls(idx, objects, opt.negs)
+        data = cls(idx, objects, enames, opt.negs)
         model = SNEmbedding(
             len(data.objects),
             opt.dim,
             dist=distfn,
             max_norm=max_norm
         )
-        data.objects = objects
+        data.objects = objects #no need?
+        data.enames = enames
         return model, data, model_name, conf
