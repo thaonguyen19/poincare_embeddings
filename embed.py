@@ -18,37 +18,8 @@ from rsgd import RiemannianSGD
 from sklearn.metrics import average_precision_score
 import gc
 import sys
-
-
-def eval_sanity_check(val_filename, checkpoint_file, out_file, dim, distfn, train_dset, negs=50, n_top=5): 
-    #GOAL: print n_top top ranked entries
-    #how to compute dist given a linkage of packages
-    #for each import, go through all other imports (starting from sklearn), as long as it exceeds the min_dist, break and move on the next search
-    all_val_strs = []
-    with open(val_filename, 'r') as f:
-        for line in f:
-            all_val_strs.append(line.strip())
-
-    checkpoint = th.load(checkpoint_file)
-    parser = argparse.ArgumentParser(description='Train Poincare Embeddings')
-    opt = parser.parse_args()
-    opt.dim = dim
-    opt.distfn = distfn
-    opt.negs = negs #doesn't matter
-    opt.dset = train_dset 
-    idx, objects, name_to_idx = slurp(opt.dset)
-
-    model, data, model_name, _ = model.SNGraphDataset.initialize(distfn, opt, idx, objects)
-    model.load_state_dict(checkpoint['state_dict'])
-    lt = th.from_numpy(model.embedding())
-
-    with open(out_file, 'w') as fout:
-        for s in all_val_strs:
-            max_sim = None
-            n_top_candidates = [''] * n_top
-            #start computing dists
-
-        
+from eval_utils import find_nn, find_shortest_path
+import matplotlib.pyplot as plt
 
 
 def ranking(types, model, distfn): #types here is adjacency matrix
@@ -76,7 +47,7 @@ def ranking(types, model, distfn): #types here is adjacency matrix
     return np.mean(ranks), np.mean(ap_scores)
 
 
-def control(queue, types, data, distfn, nepochs, processes, model_name):
+def control(queue, types, data, distfn, nepochs, processes, model_name, dim):
     min_rank = (np.Inf, -1)
     max_map = (0, -1)
     while True:
@@ -94,6 +65,9 @@ def control(queue, types, data, distfn, nepochs, processes, model_name):
                 'model': model.state_dict(),
                 'epoch': epoch,
                 'objects': data.objects,
+                'enames': data.enames,
+                'distfn': distfn,
+                'dim': dim
             }, model_name+'.pth') 
             # compute embedding quality
             mrank, mAP = ranking(types, model, distfn)
@@ -135,7 +109,7 @@ if __name__ == '__main__':
     #     log_level = logging.INFO
     # log = logging.getLogger('poincare-nips17')
     # logging.basicConfig(level=log_level, format='%(message)s', stream=sys.stdout)
-    idx, objects, _ = slurp(opt.dset)
+    idx, objects, enames = slurp(opt.dset)
 
     # create adjacency list for evaluation
     adjacency = ddict(dict)
@@ -159,7 +133,7 @@ if __name__ == '__main__':
         raise ValueError('Unknown distance function ' + opt.distfn)
 
     # initialize model and data
-    model, data, model_name, conf = model.SNGraphDataset.initialize(distfn, opt, idx, objects)
+    model, data, model_name, conf = model.SNGraphDataset.initialize(distfn, opt, idx, objects, enames)
 
     # Build config string for log
     conf = [
@@ -196,7 +170,7 @@ if __name__ == '__main__':
 
         ctrl = mp.Process(
             target=control,
-            args=(queue, adjacency, data, distfn, opt.epochs, processes, model_name)
+            args=(queue, adjacency, data, distfn, opt.epochs, processes, model_name, opt.dim)
         )
         ctrl.start()
         ctrl.join()
