@@ -48,7 +48,7 @@ def generate_train_val(package_file_sorted, sep='.'):
 
 
 def generate_pairs(package_file, dataset, sep='.'): 
-    #package_file name has format "*_train"
+    #package_file name has format "*_sorted"
     mapping = ddict(set) #map from higher order element to the all direct children in the hierarchy
     all_names = set()
     duplicate = set() #assume the immediate parent package names would be different
@@ -75,7 +75,7 @@ def generate_pairs(package_file, dataset, sep='.'):
                 else: #don't add duplicate elements for now
                     fout.write(v + '\t' + k + '\n') #more specific package comes first
 
-    duplicate_file_name = package_file[:(-1*len(dataset))]+'_duplicate_'+dataset
+    duplicate_file_name = package_file[:-6]+'_duplicate_'+dataset
     with open(duplicate_file_name, 'w') as fdup:
         for i in duplicate:
             fdup.write(str(i) + '\n')
@@ -159,12 +159,12 @@ def slurp(fin, fparse=parse_line, symmetrize=False):
     # freeze defaultdicts after training data and convert to arrays
     objects = intmap_to_list(dict(enames)) #list of all elements
     print('slurp: objects=%d, edges=%d' % (len(objects), len(idx)))
-    return idx, objects
+    return idx, objects, enames
 
 
 if __name__ == '__main__':
     ### use command line sort <init file> -o <sorted file> to obtain a sorted file
     package_file_sorted = './package/functions_04182018_sorted' 
     sorted_train_file, sorted_val_file = generate_train_val(package_file_sorted) 
-    duplicate_set, duplicate_file_name, tsv_package_file = generate_pairs(sorted_train_file, 'train')
+    duplicate_set, duplicate_file_name, tsv_package_file = generate_pairs(package_file_sorted, 'train')
     process_duplicate(duplicate_set, package_file_sorted, tsv_package_file)

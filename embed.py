@@ -20,17 +20,35 @@ import gc
 import sys
 
 
-# def eval_sanity_check(val_filename, model, distfn, n_top=5): #print n_top top ranked entries
-#     #how to compute dist given a linkage of packages
-#     #for each import, go through all other imports (starting from sklearn), as long as it exceeds the min_dist, break and move on the next search
-#     all_val_strs = []
-#     with open(val_filename, 'r') as f:
-#         for line in f:
-#             all_val_strs.append(line.strip())
-#     for s in all_val_strs:
-#         max_sim = None
-#         n_top_candidates = [''] * n_top
-#         #start computing dist
+def eval_sanity_check(val_filename, checkpoint_file, out_file, dim, distfn, train_dset, negs=50, n_top=5): 
+    #GOAL: print n_top top ranked entries
+    #how to compute dist given a linkage of packages
+    #for each import, go through all other imports (starting from sklearn), as long as it exceeds the min_dist, break and move on the next search
+    all_val_strs = []
+    with open(val_filename, 'r') as f:
+        for line in f:
+            all_val_strs.append(line.strip())
+
+    checkpoint = th.load(checkpoint_file)
+    parser = argparse.ArgumentParser(description='Train Poincare Embeddings')
+    opt = parser.parse_args()
+    opt.dim = dim
+    opt.distfn = distfn
+    opt.negs = negs #doesn't matter
+    opt.dset = train_dset 
+    idx, objects, name_to_idx = slurp(opt.dset)
+
+    model, data, model_name, _ = model.SNGraphDataset.initialize(distfn, opt, idx, objects)
+    model.load_state_dict(checkpoint['state_dict'])
+    lt = th.from_numpy(model.embedding())
+
+    with open(out_file, 'w') as fout:
+        for s in all_val_strs:
+            max_sim = None
+            n_top_candidates = [''] * n_top
+            #start computing dists
+
+        
 
 
 def ranking(types, model, distfn): #types here is adjacency matrix
@@ -58,7 +76,7 @@ def ranking(types, model, distfn): #types here is adjacency matrix
     return np.mean(ranks), np.mean(ap_scores)
 
 
-def control(queue, types, data, fout, distfn, nepochs, processes):
+def control(queue, types, data, distfn, nepochs, processes, model_name):
     min_rank = (np.Inf, -1)
     max_map = (0, -1)
     while True:
@@ -76,7 +94,7 @@ def control(queue, types, data, fout, distfn, nepochs, processes):
                 'model': model.state_dict(),
                 'epoch': epoch,
                 'objects': data.objects,
-            }, fout)
+            }, model_name+'.pth') 
             # compute embedding quality
             mrank, mAP = ranking(types, model, distfn)
             if mrank < min_rank[0]:
@@ -98,7 +116,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train Poincare Embeddings')
     parser.add_argument('-dim', help='Embedding dimension', type=int)
     parser.add_argument('-dset', help='Dataset to embed', type=str)
-    parser.add_argument('-fout', help='Filename where to store model', type=str)
     parser.add_argument('-distfn', help='Distance function', type=str)
     parser.add_argument('-lr', help='Learning rate', type=float)
     parser.add_argument('-epochs', help='Number of epochs', type=int, default=200)
@@ -118,7 +135,7 @@ if __name__ == '__main__':
     #     log_level = logging.INFO
     # log = logging.getLogger('poincare-nips17')
     # logging.basicConfig(level=log_level, format='%(message)s', stream=sys.stdout)
-    idx, objects = slurp(opt.dset)
+    idx, objects, _ = slurp(opt.dset)
 
     # create adjacency list for evaluation
     adjacency = ddict(dict)
@@ -179,7 +196,7 @@ if __name__ == '__main__':
 
         ctrl = mp.Process(
             target=control,
-            args=(queue, adjacency, data, opt.fout, distfn, opt.epochs, processes)
+            args=(queue, adjacency, data, distfn, opt.epochs, processes, model_name)
         )
         ctrl.start()
         ctrl.join()

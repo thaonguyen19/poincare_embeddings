@@ -195,7 +195,10 @@ class SNGraphDataset(GraphDataset):
     @classmethod
     def initialize(cls, distfn, opt, idx, objects, max_norm=1):
         conf = []
-        model_name = cls.model_name % (opt.dset, opt.distfn, opt.dim)
+        dset_name = opt.dset.split('/')[-1]
+        if '.tsv' in dset_name:
+            dset_name = dset_name[:-4]
+        model_name = cls.model_name % (dset_name, opt.distfn, opt.dim)
         data = cls(idx, objects, opt.negs)
         model = SNEmbedding(
             len(data.objects),
