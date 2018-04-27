@@ -46,7 +46,7 @@ def ranking(types, model, distfn): #types here is adjacency matrix
     return np.mean(ranks), np.mean(ap_scores)
 
 
-def control(queue, types, data, distfn, nepochs, processes, model_name, dim):
+def control(queue, types, data, distfn, processes, model_name, opt):
     min_rank = (np.Inf, -1)
     max_map = (0, -1)
     while True:
@@ -62,12 +62,19 @@ def control(queue, types, data, distfn, nepochs, processes, model_name, dim):
             # save model to fout
             th.save({
                 'model': model.state_dict(),
-                'epoch': epoch,
                 'objects': data.objects,
                 'enames': data.enames,
                 'distfn': distfn,
-                'dim': dim
-            }, model_name+'.pth') 
+                'dim': opt.dim
+            }, model_name+'_epoch_'+str(epoch)+'.pth') 
+
+            # nearest_neighbor & distance relation evaluation
+            if epoch % 50 == 0:
+                find_shortest_path(model, opt.dset, checkpoint_file=None, epoch=epoch)
+                if opt.val_file != '':
+                    print("find_nn")
+                    find_nn(opt.valset, model, checkpoint_file=None, out_file=out_file, duplicate_file=opt.dupset)
+            
             # compute embedding quality
             mrank, mAP = ranking(types, model, distfn)
             if mrank < min_rank[0]:
@@ -80,7 +87,7 @@ def control(queue, types, data, distfn, nepochs, processes, model_name, dim):
         else:
             print("json_log: epoch %d  elapsed %.2f  loss %.3f" % (epoch, elapsed, loss))
 
-        if epoch >= nepochs - 1:
+        if epoch >= opt.epochs - 1:
             print("results: mAP %g  mAP epoch %d  mean rank %g  mean rank epoch %d" % (max_map[0], max_map[1], min_rank[0], min_rank[1]))
             break
 
@@ -172,7 +179,7 @@ if __name__ == '__main__':
 
         ctrl = mp.Process(
             target=control,
-            args=(queue, adjacency, data, distfn, opt.epochs, processes, model_name, opt.dim)
+            args=(queue, adjacency, data, distfn, processes, model_name, opt)
         )
         ctrl.start()
         ctrl.join()
