@@ -58,15 +58,16 @@ def train(model, data, optimizer, opt, rank=1, queue=None):
             if epoch == (opt.epochs - 1) or epoch % opt.eval_each == (opt.eval_each - 1):
                 emb = model
             if queue is not None:
+                if epoch % 50 == 0:
+                    print("evaluating")
+                    find_shortest_path(model, opt.dset, checkpoint_file=None, epoch=epoch)
+                    if opt.val_file != '':
+                        print("find_nn")
+                        find_nn(opt.valset, model, checkpoint_file=None, out_file=out_file, duplicate_file=opt.dupset)
                 queue.put(
                     (epoch, elapsed, np.mean(epoch_loss), emb)
                 )
             else:
                 print('elapsed: %.2f   loss: %.3f' % (elapsed, np.mean(epoch_loss)))
-
-            if epoch % 200 == 0:
-            find_shortest_path(model, opt.dset, checkpoint_file=None, epoch=epoch)
-            if opt.val_file != '':
-                find_nn(opt.valset, model, checkpoint_file=None, out_file=out_file, duplicate_file=opt.dupset)
 
         gc.collect()

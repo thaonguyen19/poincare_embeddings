@@ -1,9 +1,7 @@
 import networkx as nx
 import numpy as np
 from data import slurp
-from test import find_all_cycles
 import matplotlib.pyplot as plt 
-
 
 def build_graph(dataset):
 	G = nx.Graph()
@@ -76,6 +74,7 @@ def load_model(checkpoint_file):
 	#idx, objects, enames = slurp(opt.dset)
 	model, data, model_name, _ = model.SNGraphDataset.initialize(distfn, opt, idx, objects, enames)
 	model.load_state_dict(checkpoint['state_dict'])
+	return model
 
 
 def find_nn(val_filename, model, checkpoint_file, out_file, duplicate_file, n_top=5, epoch=None): #train_dset
@@ -95,6 +94,7 @@ def find_nn(val_filename, model, checkpoint_file, out_file, duplicate_file, n_to
 	if model is None:
 		model = load_model(checkpoint_file)
 
+	print(len(all_val_strs), len(all_duplicate_strs))
 	lt = model.embedding()
 	n_val = len(val_filename)
 	dist_scores = np.zeros((n_val, n_val))
@@ -141,12 +141,12 @@ def find_shortest_path(model, dataset, checkpoint_file, epoch=None):
 	Ys = []
 	G, enames_inv = build_graph(dataset)
 	n_nodes = len(enames_inv.items())
-	shortest_path_dict = nx.shortest_path_length(G)
-
+	shortest_path_dict = dict(nx.shortest_path_length(G))
+	
 	if model is None:
 		model = load_model(checkpoint_file)
 	lt = model.embedding()
-
+	
 	for i in range(n_nodes):
 		for j in range(i+1, n_nodes):
 			true_dist = shortest_path_dict[i][j] ### undirected graph, to avoid complications in computing shortest path

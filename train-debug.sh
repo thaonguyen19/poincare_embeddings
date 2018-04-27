@@ -25,6 +25,6 @@ python3 embed.py \
        -dset package/functions_04182018_debug_train.tsv \
        -valset package/functions_04182018_debug_val \
        -dupset package/functions_04182018_debug_duplicate_train \
-       -fout packages_latest.pth \
+       -fout debug_latest.pth \
        -batchsize 50 \
        -eval_each 100 \
