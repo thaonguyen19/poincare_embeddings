@@ -72,8 +72,6 @@ def control(queue, types, data, distfn, processes, model_name, opt):
 
             # nearest_neighbor & distance relation evaluation
             find_shortest_path(model, opt.dset, checkpoint_file=None, epoch=epoch)
-            if opt.valset != '':
-                find_nn(opt.valset, model, checkpoint_file=None, out_file=out_file, duplicate_file=opt.dupset)
             
             # compute embedding quality
             mrank, mAP = ranking(types, model, distfn)
@@ -88,6 +86,8 @@ def control(queue, types, data, distfn, processes, model_name, opt):
             print("json_log: epoch %d  elapsed %.2f  loss %.3f" % (epoch, elapsed, loss))
 
         if epoch >= opt.epochs - 1:
+            if opt.valset != '':
+                find_nn(opt.valset, model, checkpoint_file=None, out_file=out_file, duplicate_file=opt.dupset)
             print("results: mAP %g  mAP epoch %d  mean rank %g  mean rank epoch %d" % (max_map[0], max_map[1], min_rank[0], min_rank[1]))
             break
 

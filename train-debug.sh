@@ -17,7 +17,7 @@ export OMP_NUM_THREADS=1
 python3 embed.py \
        -dim 10 \
        -lr 1.0 \
-       -epochs 400 \
+       -epochs 100 \
        -negs 50 \
        -burnin 20 \
        -nproc "${NTHREADS}" \

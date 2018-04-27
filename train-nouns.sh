@@ -27,4 +27,4 @@ python3 embed.py \
        -dupset package/functions_04182018_duplicate_train \
        -fout packages_latest.pth \
        -batchsize 50 \
-       -eval_each 100 \
+       -eval_each 150 \

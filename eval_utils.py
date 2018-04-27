@@ -93,10 +93,9 @@ def find_nn(val_filename, model, checkpoint_file, out_file, duplicate_file, n_to
 		for line in f:
 			all_duplicate_strs.append(line.strip())
 
+	print("VAL SET SIZE:", len(all_val_strs))
 	if model is None:
 		model = load_model(checkpoint_file)
-
-	print(len(all_val_strs), len(all_duplicate_strs))
 	lt = model.embedding()
 	n_val = len(all_val_strs)
 	dist_scores = np.zeros((n_val, n_val))
@@ -119,7 +118,6 @@ def find_nn(val_filename, model, checkpoint_file, out_file, duplicate_file, n_to
 			dist_scores[i][j] = dist
 
 	all_neighbors = np.argpartition(dist_scores, n_top) #find n_top with smallest distances in each row
-
 	with open(out_file, 'a') as fout:
 		if epoch is None:
 			fout.write('Last epoch\n')
@@ -136,6 +134,7 @@ def find_nn(val_filename, model, checkpoint_file, out_file, duplicate_file, n_to
 			fout.write(s + '\n')
 			for j in n_top:
 				fout.write(neighbors[j]+'\n')
+		fout.write('\n')
 
 
 def find_shortest_path(model, dataset, checkpoint_file, epoch=None):
@@ -156,7 +155,7 @@ def find_shortest_path(model, dataset, checkpoint_file, epoch=None):
 			Xs.append(true_dist)
 			Ys.append(embed_dist)
 
-	plt.scatter(Xs, Ys)
+	plt.scatter(Xs, Ys, s=1, c='b')
 	plt.xlabel('True distance')
 	plt.ylabel('Embedded distance')
 	plt.savefig('epoch'+str(epoch)+'.png', format='png')
