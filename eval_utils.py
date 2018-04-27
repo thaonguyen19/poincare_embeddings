@@ -2,10 +2,10 @@ import networkx as nx
 import numpy as np
 from data import slurp
 from test import find_all_cycles
+import matplotlib.pyplot as plt 
 
 
-def check_cycle(dataset):
-	assert('wo_duplicate' in dataset) #file where 'undirected' edges between duplicated package names have not been added
+def build_graph(dataset):
 	G = nx.Graph()
 	idx, objects, enames = slurp(dataset)
 	enames_inv = dict()
@@ -18,6 +18,12 @@ def check_cycle(dataset):
 	for r in range(idx.shape[0]):
 		row = idx[r, :]
 		G.add_edge(row[1], row[0])
+	return G, enames_inv
+
+
+def check_cycle(dataset):
+	assert('wo_duplicate' in dataset) #file where 'undirected' edges between duplicated package names have not been added
+	G, enames_inv = build_graph(dataset)
 	print("finish building graph")
 	
 	new_dataset = dataset[:-4] + '_no_cycle.tsv'
@@ -30,7 +36,7 @@ def check_cycle(dataset):
 			for e in cycle:
 				cycle_nodes.add(e[0])
 				G.remove_edge(*e)
-				
+
 		except nx.NetworkXNoCycle as e:
 			print(e)
 			break	
@@ -52,9 +58,27 @@ def check_cycle(dataset):
 						fout.write(line)
 					else:
 						print("removing:", line.strip())
-	
 
-def find_nn(val_filename, checkpoint_file, out_file, duplicate_file, n_top=5, epoch=None, sep='.'): #train_dset
+
+def load_model(checkpoint_file):
+	assert(checkpoint_file is not None)
+	checkpoint = th.load(checkpoint_file)
+	objects = checkpoint['objects']
+	enames = checkpoint['enames']
+	dim = checkpoint['dim']
+	distfn = checkpoint['distfn']
+	parser = argparse.ArgumentParser(description='Resume Poincare Embeddings')
+	opt = parser.parse_args()
+	opt.dim = dim
+	opt.distfn = distfn
+	opt.negs = 50 #doesn't matter
+	opt.dset = 'test.tsv' #doesn't matter
+	#idx, objects, enames = slurp(opt.dset)
+	model, data, model_name, _ = model.SNGraphDataset.initialize(distfn, opt, idx, objects, enames)
+	model.load_state_dict(checkpoint['state_dict'])
+
+
+def find_nn(val_filename, model, checkpoint_file, out_file, duplicate_file, n_top=5, epoch=None): #train_dset
 	#GOAL: print n_top top ranked nearest neighbors
 	#how to compute dist given a linkage of packages - for each import, go through all other imports (starting from sklearn), as long as it exceeds the min_dist, break and move on the next search
 	all_val_strs = []
@@ -68,27 +92,15 @@ def find_nn(val_filename, checkpoint_file, out_file, duplicate_file, n_top=5, ep
 		for line in f:
 			all_duplicate_strs.append(line.strip())
 
-	checkpoint = th.load(checkpoint_file)
-	objects = checkpoint['objects']
-	enames = checkpoint['enames']
-	dim = checkpoint['dim']
-	distfn = checkpoint['distfn']
-	parser = argparse.ArgumentParser(description='Train Poincare Embeddings')
-	opt = parser.parse_args()
-	opt.dim = dim
-	opt.distfn = distfn
-	opt.negs = 50 #doesn't matter
-	opt.dset = 'test.tsv' #doesn't matter
-	#idx, objects, enames = slurp(opt.dset)
+	if model is None:
+		model = load_model(checkpoint_file)
 
-	model, data, model_name, _ = model.SNGraphDataset.initialize(distfn, opt, idx, objects, enames)
-	model.load_state_dict(checkpoint['state_dict'])
 	lt = model.embedding()
 	n_val = len(val_filename)
 	dist_scores = np.zeros((n_val, n_val))
 
 	def output_last_token(s):
-		tokens = s.split(sep=sep)
+		tokens = s.split(sep='.')
 		token = tokens[-1]
 		if token in all_duplicate_strs:
 			token = token + '_' + tokens[-2]
@@ -101,13 +113,17 @@ def find_nn(val_filename, checkpoint_file, out_file, duplicate_file, n_top=5, ep
 			token_compared = output_last_token(all_val_strs[j])
 			idx1 = enames[token]
 			idx2 = enames[token_compared]
-			dist = sum(np.square(lt[idx1, :] - lt[idx2, :]))
+			dist = np.linalg.norm(lt[idx1, :] - lt[idx2, :])
 			dist_scores[i][j] = dist
 
 	all_neighbors = np.argpartition(dist_scores, n_top) #find n_top with smallest distances in each row
 
 	with open(out_file, 'a') as fout:
-		fout.write('epoch ' + str(epoch) + '\n')
+		if epoch is None:
+			fout.write('Last epoch\n')
+		else:
+			fout.write('epoch ' + str(epoch) + '\n')
+
 		for i in range(n_val):
 			s = all_val_strs[i]
 			neighbors = []
@@ -120,8 +136,28 @@ def find_nn(val_filename, checkpoint_file, out_file, duplicate_file, n_top=5, ep
 				fout.write(neighbors[j]+'\n')
 
 
-def find_shortest_path(node1, node2, adjacency_matrix):
-	pass
+def find_shortest_path(model, dataset, checkpoint_file, epoch=None):
+	Xs = []
+	Ys = []
+	G, enames_inv = build_graph(dataset)
+	n_nodes = len(enames_inv.items())
+	shortest_path_dict = nx.shortest_path_length(G)
+
+	if model is None:
+		model = load_model(checkpoint_file)
+	lt = model.embedding()
+
+	for i in range(n_nodes):
+		for j in range(i+1, n_nodes):
+			true_dist = shortest_path_dict[i][j] ### undirected graph, to avoid complications in computing shortest path
+			embed_dist = np.linalg.norm(lt[i, :] - lt[j, :])
+			Xs.append(true_dist)
+			Ys.append(embed_dist)
+
+	plt.scatter(Xs, Ys)
+	plt.xlabel('True distance')
+	plt.ylabel('Embedded distance')
+	plt.savefig('epoch'+str(epoch)+'.png', format='png')
 
 
 if __name__ == '__main__':

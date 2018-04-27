@@ -18,7 +18,6 @@ from rsgd import RiemannianSGD
 from sklearn.metrics import average_precision_score
 import gc
 import sys
-from eval_utils import find_nn, find_shortest_path
 import matplotlib.pyplot as plt
 
 
@@ -90,6 +89,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train Poincare Embeddings')
     parser.add_argument('-dim', help='Embedding dimension', type=int)
     parser.add_argument('-dset', help='Dataset to embed', type=str)
+    parser.add_argument('-valset', help='Validation Dataset (optional)', type=str, default='')
+    parser.add_argument('-dupset', help='Duplicate Data', type=str)
     parser.add_argument('-distfn', help='Distance function', type=str)
     parser.add_argument('-lr', help='Learning rate', type=float)
     parser.add_argument('-epochs', help='Number of epochs', type=int, default=200)
@@ -163,7 +164,7 @@ if __name__ == '__main__':
         for rank in range(opt.nproc):
             p = mp.Process(
                 target=train.train_mp,
-                args=(model, data, optimizer, opt, rank + 1, queue)
+                args=(model, data, optimizer, opt, duplicate_file, val_file, rank + 1, queue)
             )
             p.start()
             processes.append(p)

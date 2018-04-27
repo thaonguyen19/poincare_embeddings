@@ -10,6 +10,7 @@ import numpy as np
 import timeit
 from torch.utils.data import DataLoader
 import gc
+from eval_utils import find_nn, find_shortest_path
 
 _lr_multiplier = 0.01
 
@@ -23,6 +24,7 @@ def train_mp(model, data, optimizer, opt, rank, queue):
 
 
 def train(model, data, optimizer, opt, rank=1, queue=None):
+    out_file = 'nearest_neighbor_results.txt'
     # setup parallel data loader
     loader = DataLoader(
         data,
@@ -61,4 +63,10 @@ def train(model, data, optimizer, opt, rank=1, queue=None):
                 )
             else:
                 print('elapsed: %.2f   loss: %.3f' % (elapsed, np.mean(epoch_loss)))
+
+            if epoch % 100 == 0:
+            find_shortest_path(model, opt.dset, checkpoint_file=None, epoch=epoch)
+            if opt.val_file != '':
+                find_nn(opt.valset, model, checkpoint_file=None, out_file=out_file, duplicate_file=opt.dupset)
+
         gc.collect()
