@@ -64,7 +64,7 @@ def train(model, data, optimizer, opt, rank=1, queue=None):
             else:
                 print('elapsed: %.2f   loss: %.3f' % (elapsed, np.mean(epoch_loss)))
 
-            if epoch % 100 == 0:
+            if epoch % 200 == 0:
             find_shortest_path(model, opt.dset, checkpoint_file=None, epoch=epoch)
             if opt.val_file != '':
                 find_nn(opt.valset, model, checkpoint_file=None, out_file=out_file, duplicate_file=opt.dupset)

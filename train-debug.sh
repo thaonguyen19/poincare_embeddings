@@ -17,14 +17,14 @@ export OMP_NUM_THREADS=1
 python3 embed.py \
        -dim 10 \
        -lr 1.0 \
-       -epochs 1500 \
+       -epochs 400 \
        -negs 50 \
        -burnin 20 \
        -nproc "${NTHREADS}" \
        -distfn poincare \
-       -dset package/functions_04182018_train.tsv \
-       -valset package/functions_04182018_val \
-       -dupset package/functions_04182018_duplicate_train \
+       -dset package/functions_04182018_debug_train.tsv \
+       -valset package/functions_04182018_debug_val \
+       -dupset package/functions_04182018_debug_duplicate_train \
        -fout packages_latest.pth \
        -batchsize 50 \
        -eval_each 100 \
