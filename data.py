@@ -11,7 +11,7 @@ import numpy as np
 import torch as th
 import itertools
 
-DEFAULT_WEIGHT = 2
+DEFAULT_WEIGHT = 1
 
 def generate_debug_set(package_file_sorted, n_test=300):
     debug_file_name = package_file_sorted[:-6] + 'debug_sorted'

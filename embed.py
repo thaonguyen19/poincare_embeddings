@@ -19,6 +19,7 @@ from sklearn.metrics import average_precision_score
 import gc
 import sys
 import matplotlib.pyplot as plt
+from eval_utils import find_nn, find_shortest_path
 
 
 def ranking(types, model, distfn): #types here is adjacency matrix
@@ -47,6 +48,7 @@ def ranking(types, model, distfn): #types here is adjacency matrix
 
 
 def control(queue, types, data, distfn, processes, model_name, opt):
+    out_file = 'nearest_neighbor_results.txt'
     min_rank = (np.Inf, -1)
     max_map = (0, -1)
     while True:
@@ -69,11 +71,9 @@ def control(queue, types, data, distfn, processes, model_name, opt):
             }, model_name+'_epoch_'+str(epoch)+'.pth') 
 
             # nearest_neighbor & distance relation evaluation
-            if epoch % 50 == 0:
-                find_shortest_path(model, opt.dset, checkpoint_file=None, epoch=epoch)
-                if opt.val_file != '':
-                    print("find_nn")
-                    find_nn(opt.valset, model, checkpoint_file=None, out_file=out_file, duplicate_file=opt.dupset)
+            find_shortest_path(model, opt.dset, checkpoint_file=None, epoch=epoch)
+            if opt.valset != '':
+                find_nn(opt.valset, model, checkpoint_file=None, out_file=out_file, duplicate_file=opt.dupset)
             
             # compute embedding quality
             mrank, mAP = ranking(types, model, distfn)

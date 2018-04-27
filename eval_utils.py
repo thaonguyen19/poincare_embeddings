@@ -1,7 +1,10 @@
 import networkx as nx
 import numpy as np
 from data import slurp
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt 
+
 
 def build_graph(dataset):
 	G = nx.Graph()
@@ -12,7 +15,6 @@ def build_graph(dataset):
 
 	idx = idx.numpy()
 	idx = idx[:, :2]
-	G.add_nodes_from(objects)
 	for r in range(idx.shape[0]):
 		row = idx[r, :]
 		G.add_edge(row[1], row[0])
@@ -96,7 +98,7 @@ def find_nn(val_filename, model, checkpoint_file, out_file, duplicate_file, n_to
 
 	print(len(all_val_strs), len(all_duplicate_strs))
 	lt = model.embedding()
-	n_val = len(val_filename)
+	n_val = len(all_val_strs)
 	dist_scores = np.zeros((n_val, n_val))
 
 	def output_last_token(s):
@@ -142,13 +144,13 @@ def find_shortest_path(model, dataset, checkpoint_file, epoch=None):
 	G, enames_inv = build_graph(dataset)
 	n_nodes = len(enames_inv.items())
 	shortest_path_dict = dict(nx.shortest_path_length(G))
-	
 	if model is None:
 		model = load_model(checkpoint_file)
 	lt = model.embedding()
-	
 	for i in range(n_nodes):
 		for j in range(i+1, n_nodes):
+			if j not in shortest_path_dict[i]:
+				continue
 			true_dist = shortest_path_dict[i][j] ### undirected graph, to avoid complications in computing shortest path
 			embed_dist = np.linalg.norm(lt[i, :] - lt[j, :])
 			Xs.append(true_dist)

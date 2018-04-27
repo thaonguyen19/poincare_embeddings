@@ -27,4 +27,4 @@ python3 embed.py \
        -dupset package/functions_04182018_debug_duplicate_train \
        -fout debug_latest.pth \
        -batchsize 50 \
-       -eval_each 100 \
+       -eval_each 50 \
