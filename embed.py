@@ -19,7 +19,8 @@ from sklearn.metrics import average_precision_score
 import gc
 import sys
 import matplotlib.pyplot as plt
-from eval_utils import find_nn, find_shortest_path
+from eval_utils import find_nn, find_shortest_path, build_graph
+import time
 
 
 def ranking(types, model, distfn): #types here is adjacency matrix
@@ -47,7 +48,7 @@ def ranking(types, model, distfn): #types here is adjacency matrix
     return np.mean(ranks), np.mean(ap_scores)
 
 
-def control(queue, types, data, distfn, processes, model_name, opt):
+def control(queue, types, data, distfn, processes, model_name, shortest_path_dict, opt):
     out_file = 'nearest_neighbor_results.txt'
     min_rank = (np.Inf, -1)
     max_map = (0, -1)
@@ -71,7 +72,7 @@ def control(queue, types, data, distfn, processes, model_name, opt):
             }, model_name+'_epoch_'+str(epoch)+'.pth') 
 
             # nearest_neighbor & distance relation evaluation
-            find_shortest_path(model, opt.dset, checkpoint_file=None, epoch=epoch)
+            find_shortest_path(model, opt.dset, checkpoint_file=None, shortest_path_dict=shortest_path_dict, epoch=epoch)
             
             # compute embedding quality
             mrank, mAP = ranking(types, model, distfn)
@@ -161,6 +162,12 @@ if __name__ == '__main__':
         retraction=opt.retraction,
         lr=opt.lr,
     )
+    
+    t1 = time.time()
+    G, _ = build_graph(opt.dset)
+    shortest_path_dict = dict(nx.shortest_path_length(G))
+    t2 = time.time()
+    print("Time to compute shortest paths for all nodes:", str(t2-t1))
 
     # if nproc == 0, run single threaded, otherwise run Hogwild
     if opt.nproc == 0:
@@ -179,7 +186,7 @@ if __name__ == '__main__':
 
         ctrl = mp.Process(
             target=control,
-            args=(queue, adjacency, data, distfn, processes, model_name, opt)
+            args=(queue, adjacency, data, distfn, processes, model_name, shortest_path_dict, opt)
         )
         ctrl.start()
         ctrl.join()

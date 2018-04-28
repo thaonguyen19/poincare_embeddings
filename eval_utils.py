@@ -1,6 +1,7 @@
 import networkx as nx
 import numpy as np
 from data import slurp
+import torch as th
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt 
@@ -137,12 +138,12 @@ def find_nn(val_filename, model, checkpoint_file, out_file, duplicate_file, n_to
 		fout.write('\n')
 
 
-def find_shortest_path(model, dataset, checkpoint_file, epoch=None):
+def find_shortest_path(model, dataset, checkpoint_file, shortest_path_dict, epoch=None):
 	Xs = []
 	Ys = []
 	G, enames_inv = build_graph(dataset)
 	n_nodes = len(enames_inv.items())
-	shortest_path_dict = dict(nx.shortest_path_length(G))
+
 	if model is None:
 		model = load_model(checkpoint_file)
 	lt = model.embedding()
@@ -159,6 +160,7 @@ def find_shortest_path(model, dataset, checkpoint_file, epoch=None):
 	plt.xlabel('True distance')
 	plt.ylabel('Embedded distance')
 	plt.savefig('epoch'+str(epoch)+'.png', format='png')
+	return shortest_path_dict
 
 
 if __name__ == '__main__':
