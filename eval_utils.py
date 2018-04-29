@@ -138,7 +138,14 @@ def find_nn(val_filename, model, checkpoint_file, out_file, duplicate_file, n_to
 		fout.write('\n')
 
 
-def find_shortest_path(model, dataset, checkpoint_file, shortest_path_dict, epoch=None):
+def find_shortest_path(model, dataset, checkpoint_file, shortest_path_dict, result_dict=None):
+	plt_name = 'plt'
+	if result_dict is not None:
+		for k, v in result_dict.items():
+			plt_name += ('_'.join([k, str(v)]))
+			plt_name += '_'
+		plt_name = plt_name[:-1] + 'epoch'+str(epoch)+'.png'
+
 	Xs = []
 	Ys = []
 	G, enames_inv = build_graph(dataset)
@@ -159,7 +166,8 @@ def find_shortest_path(model, dataset, checkpoint_file, shortest_path_dict, epoc
 	plt.scatter(Xs, Ys, s=1, c='b')
 	plt.xlabel('True distance')
 	plt.ylabel('Embedded distance')
-	plt.savefig('epoch'+str(epoch)+'.png', format='png')
+	plt.savefig(plt_name, format='png')
+	
 	return shortest_path_dict
 
 
