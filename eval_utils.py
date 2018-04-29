@@ -138,19 +138,17 @@ def find_nn(val_filename, model, checkpoint_file, out_file, duplicate_file, n_to
 		fout.write('\n')
 
 
-def find_shortest_path(model, dataset, checkpoint_file, shortest_path_dict, result_dict=None):
+def find_shortest_path(model, checkpoint_file, enames_inv, shortest_path_dict, result_dict=None):
 	plt_name = 'plt'
 	if result_dict is not None:
 		for k, v in result_dict.items():
 			plt_name += ('_'.join([k, str(v)]))
 			plt_name += '_'
-		plt_name = plt_name[:-1] + 'epoch'+str(epoch)+'.png'
+		plt_name = plt_name[:-1] 
 
 	Xs = []
 	Ys = []
-	G, enames_inv = build_graph(dataset)
 	n_nodes = len(enames_inv.items())
-
 	if model is None:
 		model = load_model(checkpoint_file)
 	lt = model.embedding()
@@ -166,7 +164,14 @@ def find_shortest_path(model, dataset, checkpoint_file, shortest_path_dict, resu
 	plt.scatter(Xs, Ys, s=1, c='b')
 	plt.xlabel('True distance')
 	plt.ylabel('Embedded distance')
-	plt.savefig(plt_name, format='png')
+	plt.savefig(plt_name+'.png', format='png')
+	
+	X_norms = np.array(Xs)/np.linalg.norm(Xs)
+	Y_norms = np.array(Ys)/np.linalg.norm(Ys)
+	plt.scatter(X_norms, Y_norms, s=1, c='b')
+	plt.xlabel('True distance')
+	plt.ylabel('Embedded distance')
+	plt.savefig(plt_name+'_normalized.png', format='png')
 	
 	return shortest_path_dict
 
