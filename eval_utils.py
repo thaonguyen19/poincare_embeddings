@@ -138,7 +138,7 @@ def find_nn(val_filename, model, checkpoint_file, out_file, duplicate_file, n_to
 		fout.write('\n')
 
 
-def find_shortest_path(model, checkpoint_file, enames_inv, shortest_path_dict, result_dict=None):
+def find_shortest_path(model, checkpoint_file, idx_dict, shortest_path_dict, result_dict=None):
 	plt_name = 'plt'
 	if result_dict is not None:
 		for k, v in result_dict.items():
@@ -148,16 +148,17 @@ def find_shortest_path(model, checkpoint_file, enames_inv, shortest_path_dict, r
 
 	Xs = []
 	Ys = []
-	n_nodes = len(enames_inv.items())
+	#n_nodes = len(enames_inv.items())
 	if model is None:
 		model = load_model(checkpoint_file)
 	lt = model.embedding()
-	for i in range(n_nodes):
-		for j in range(i+1, n_nodes):
-			if j not in shortest_path_dict[i]:
+	for i in shortest_path_dict.keys():
+		for j in shortest_path_dict[i]:
+			if j <= i: #avoid repeated calculation
 				continue
+			idx1, idx2 = idx_dict[i], idx_dict[j]
 			true_dist = shortest_path_dict[i][j] ### undirected graph, to avoid complications in computing shortest path
-			embed_dist = np.linalg.norm(lt[i, :] - lt[j, :])
+			embed_dist = np.linalg.norm(lt[idx1, :] - lt[idx2, :])
 			Xs.append(true_dist)
 			Ys.append(embed_dist)
 
@@ -166,8 +167,8 @@ def find_shortest_path(model, checkpoint_file, enames_inv, shortest_path_dict, r
 	plt.ylabel('Embedded distance')
 	plt.savefig(plt_name+'.png', format='png')
 	
-	X_norms = np.array(Xs)/np.linalg.norm(Xs)
-	Y_norms = np.array(Ys)/np.linalg.norm(Ys)
+	X_norms = np.array(Xs)/np.max(Xs)
+	Y_norms = np.array(Ys)/np.max(Ys)
 	plt.scatter(X_norms, Y_norms, s=1, c='b')
 	plt.xlabel('True distance')
 	plt.ylabel('Embedded distance')

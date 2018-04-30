@@ -26,5 +26,5 @@ python3 embed.py \
        -valset package/functions_04182018_val \
        -dupset package/functions_04182018_duplicate_train \
        -fout packages_latest.pth \
-       -batchsize 50 \
+       -batchsize 100 \
        -eval_each 25 \

@@ -48,7 +48,7 @@ def ranking(types, model, distfn): #types here is adjacency matrix
     return np.mean(ranks), np.mean(ap_scores)
 
 
-def control(queue, types, data, distfn, processes, model_name, enames_inv, shortest_path_dict, opt):
+def control(queue, types, data, distfn, processes, model_name, idx_dict, shortest_path_dict, opt):
     out_file = 'nearest_neighbor_results.txt'
     min_rank = (np.Inf, -1)
     max_map = (0, -1)
@@ -82,7 +82,7 @@ def control(queue, types, data, distfn, processes, model_name, enames_inv, short
 
             result_dict = {'epoch': epoch, 'loss': round(loss,3), 'meanrank': round(mrank,2), 'mAP': round(mAP,4), 'bestrank': round(min_rank[0],2), 'bestmAP': round(max_map[0],4)}
             # nearest_neighbor & distance relation evaluation
-            find_shortest_path(model, None, enames_inv, shortest_path_dict, result_dict)
+            find_shortest_path(model, None, idx_dict, shortest_path_dict, result_dict)
         
         else:
             print("json_log: epoch %d  elapsed %.2f  loss %.3f" % (epoch, elapsed, loss))
@@ -120,7 +120,7 @@ if __name__ == '__main__':
     #     log_level = logging.INFO
     # log = logging.getLogger('poincare-nips17')
     # logging.basicConfig(level=log_level, format='%(message)s', stream=sys.stdout)
-    idx, objects, enames = slurp(opt.dset)
+    idx, objects, enames_train = slurp(opt.dset)
 
     # create adjacency list for evaluation
     adjacency = ddict(dict)
@@ -144,7 +144,7 @@ if __name__ == '__main__':
         raise ValueError('Unknown distance function ' + opt.distfn)
 
     # initialize model and data
-    model, data, model_name, conf = model.SNGraphDataset.initialize(distfn, opt, idx, objects, enames)
+    model, data, model_name, conf = model.SNGraphDataset.initialize(distfn, opt, idx, objects, enames_train)
 
     # Build config string for log
     conf = [
@@ -164,12 +164,17 @@ if __name__ == '__main__':
         lr=opt.lr,
     )
 
-    _, enames_inv = build_graph(opt.dset)
+    #_, enames_inv = build_graph(opt.dset)
     print("Start computing shortest path for file:", opt.valset + '_train.tsv')    
     t1 = time.time()
-    G, _ = build_graph(opt.valset + '_train.tsv')
+    G, enames_inv_val = build_graph(opt.valset + '_train.tsv')
     shortest_path_dict = dict(nx.shortest_path_length(G))
     t2 = time.time()
+    idx_dict = dict()
+    for i_val in shortest_path_dict:
+        i_name = enames_inv_val[i_val]
+        i_train = enames_train[i_name]
+        idx_dict[i_val] = i_train
     print("Time to compute shortest paths for all nodes:", str(t2-t1))
 
     # if nproc == 0, run single threaded, otherwise run Hogwild
@@ -189,7 +194,7 @@ if __name__ == '__main__':
 
         ctrl = mp.Process(
             target=control,
-            args=(queue, adjacency, data, distfn, processes, model_name, enames_inv, shortest_path_dict, opt)
+            args=(queue, adjacency, data, distfn, processes, model_name, idx_dict, shortest_path_dict, opt)
         )
         ctrl.start()
         ctrl.join()
