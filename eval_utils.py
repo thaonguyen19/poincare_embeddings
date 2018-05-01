@@ -5,7 +5,8 @@ import torch as th
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt 
-
+import argparse
+import model as model_class
 
 def build_graph(dataset):
 	G = nx.Graph()
@@ -61,7 +62,7 @@ def check_cycle(dataset):
 						print("removing:", line.strip())
 
 
-def load_model(checkpoint_file):
+def load_model(idx, checkpoint_file):
 	assert(checkpoint_file is not None)
 	checkpoint = th.load(checkpoint_file)
 	objects = checkpoint['objects']
@@ -75,12 +76,12 @@ def load_model(checkpoint_file):
 	opt.negs = 50 #doesn't matter
 	opt.dset = 'test.tsv' #doesn't matter
 	#idx, objects, enames = slurp(opt.dset)
-	model, data, model_name, _ = model.SNGraphDataset.initialize(distfn, opt, idx, objects, enames)
-	model.load_state_dict(checkpoint['state_dict'])
+	model, data, model_name, _ = model_class.SNGraphDataset.initialize(distfn, opt, idx, objects, enames)
+	model.load_state_dict(checkpoint['model'])
 	return model
 
 
-def find_nn(val_filename, model, checkpoint_file, out_file, duplicate_file, n_top=5, epoch=None): #train_dset
+def find_nn(val_filename, model, idx, checkpoint_file, enames, out_file, duplicate_file, n_top=5, epoch=None): #train_dset
 	#GOAL: print n_top top ranked nearest neighbors
 	#how to compute dist given a linkage of packages - for each import, go through all other imports (starting from sklearn), as long as it exceeds the min_dist, break and move on the next search
 	all_val_strs = []
@@ -96,7 +97,7 @@ def find_nn(val_filename, model, checkpoint_file, out_file, duplicate_file, n_to
 
 	print("VAL SET SIZE:", len(all_val_strs))
 	if model is None:
-		model = load_model(checkpoint_file)
+		model = load_model(idx, checkpoint_file)
 	lt = model.embedding()
 	n_val = len(all_val_strs)
 	dist_scores = np.zeros((n_val, n_val))
@@ -129,28 +130,30 @@ def find_nn(val_filename, model, checkpoint_file, out_file, duplicate_file, n_to
 			s = all_val_strs[i]
 			neighbors = []
 			for n_idx in all_neighbors[i, :]:
-				neighbors.append(all_val_strs[n_idx], dist_scores[i][n_idx])
+				neighbors.append((all_val_strs[n_idx], dist_scores[i][n_idx]))
 			neighbors = sorted(neighbors, key = lambda x: x[1])
 
 			fout.write(s + '\n')
-			for j in n_top:
-				fout.write(neighbors[j]+'\n')
-		fout.write('\n')
+			for j in range(n_top):
+				fout.write(neighbors[j][0]+'\n')
+			fout.write('\n')
 
 
-def find_shortest_path(model, checkpoint_file, idx_dict, shortest_path_dict, result_dict=None):
-	plt_name = 'plt'
+def find_shortest_path(model, idx, checkpoint_file, idx_dict, shortest_path_dict, result_dict=None, epoch=None):
+	plt_name = 'plt_'
 	if result_dict is not None:
 		for k, v in result_dict.items():
 			plt_name += ('_'.join([k, str(v)]))
 			plt_name += '_'
 		plt_name = plt_name[:-1] 
+	if epoch is not None:
+		plt_name += str(epoch)
 
 	Xs = []
 	Ys = []
 	#n_nodes = len(enames_inv.items())
 	if model is None:
-		model = load_model(checkpoint_file)
+		model = load_model(idx, checkpoint_file)
 	lt = model.embedding()
 	for i in shortest_path_dict.keys():
 		for j in shortest_path_dict[i]:
