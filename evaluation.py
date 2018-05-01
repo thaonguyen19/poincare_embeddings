@@ -18,7 +18,7 @@ if __name__ == '__main__':
 	opt.max_epoch = 300
 	opt.interval = 25
 	idx, _, enames_train = slurp(train_dset)
-	G, enames_inv_val = build_graph(val_filename + '_train.tsv')
+	G, enames_inv_val, enames_val = build_graph(val_filename + '_train.tsv')
 	shortest_path_dict = dict(nx.shortest_path_length(G))
 	idx_dict = dict()
 	for i_val in shortest_path_dict:
@@ -39,5 +39,5 @@ if __name__ == '__main__':
 		find_shortest_path(None, idx, checkpoint_file, idx_dict, shortest_path_dict, epoch=i-1)
 		if i + opt.interval > opt.max_epoch:
 			print("find nn for epoch ", str(i))
-			find_nn(val_filename, None, idx, checkpoint_file, enames_train, out_file, duplicate_file, n_top=5, epoch=i-1)
+			find_nn(val_filename, None, idx, checkpoint_file, enames_train, enames_val, shortest_path_dict, out_file, duplicate_file, idx_dict, shortest_path_dict, n_top=5, epoch=i-1)
 

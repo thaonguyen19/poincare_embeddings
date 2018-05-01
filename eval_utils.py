@@ -20,12 +20,12 @@ def build_graph(dataset):
 	for r in range(idx.shape[0]):
 		row = idx[r, :]
 		G.add_edge(row[1], row[0])
-	return G, enames_inv
+	return G, enames_inv, enames
 
 
 def check_cycle(dataset):
 	assert('wo_duplicate' in dataset) #file where 'undirected' edges between duplicated package names have not been added
-	G, enames_inv = build_graph(dataset)
+	G, enames_inv, _ = build_graph(dataset)
 	print("finish building graph")
 	
 	new_dataset = dataset[:-4] + '_no_cycle.tsv'
@@ -81,11 +81,12 @@ def load_model(idx, checkpoint_file):
 	return model
 
 
-def find_nn(val_filename, model, idx, checkpoint_file, enames, out_file, duplicate_file, n_top=5, epoch=None): #train_dset
+def find_nn(val_filename, model, idx, checkpoint_file, enames_train, enames_val, shortest_path_dict, out_file, duplicate_file, n_top=5, epoch=None): #train_dset
 	#GOAL: print n_top top ranked nearest neighbors
 	#how to compute dist given a linkage of packages - for each import, go through all other imports (starting from sklearn), as long as it exceeds the min_dist, break and move on the next search
 	all_val_strs = []
 	all_duplicate_strs = []
+	new_shortest_path_dict = defaultdict(dict)
 
 	with open(val_filename, 'r') as f:
 		for line in f:
@@ -114,10 +115,11 @@ def find_nn(val_filename, model, idx, checkpoint_file, enames, out_file, duplica
 
 		for j in range(i+1, n_val):
 			token_compared = output_last_token(all_val_strs[j])
-			idx1 = enames[token]
-			idx2 = enames[token_compared]
+			idx1 = enames_train[token]
+			idx2 = enames_train[token_compared]
 			dist = np.linalg.norm(lt[idx1, :] - lt[idx2, :])
 			dist_scores[i][j] = dist
+			dist_scores[j][i] = dist
 
 	all_neighbors = np.argpartition(dist_scores, n_top) #find n_top with smallest distances in each row
 	with open(out_file, 'a') as fout:
@@ -129,13 +131,20 @@ def find_nn(val_filename, model, idx, checkpoint_file, enames, out_file, duplica
 		for i in range(n_val):
 			s = all_val_strs[i]
 			neighbors = []
+			last_token = output_last_token(s)
+			val_idx = enames_val[last_token]
+
 			for n_idx in all_neighbors[i, :]:
-				neighbors.append((all_val_strs[n_idx], dist_scores[i][n_idx]))
+				neighbor_str = all_val_strs[n_idx]
+				last_token = output_last_token(neighbor_str)
+				val_idx_compared = enames_val[last_token]
+
+				neighbors.append((neighbor_str, dist_scores[i][n_idx], shortest_path_dict[val_idx][val_idx_compared]))
 			neighbors = sorted(neighbors, key = lambda x: x[1])
 
 			fout.write(s + '\n')
 			for j in range(n_top):
-				fout.write(neighbors[j][0]+'\n')
+				fout.write(neighbors[j][0] + '' + neighbors[j][1] + '' + neighbors[j][2] + '\n')
 			fout.write('\n')
 
 
