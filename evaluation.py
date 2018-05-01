@@ -18,23 +18,29 @@ if __name__ == '__main__':
 	opt.dir = '/lfs/hyperion/0/thaonguyen/poincare_embeddings'
 	opt.max_epoch = 300
 	opt.interval = 25
-	idx, _, enames_train = slurp(train_dset)
-	G_val, enames_inv_val, enames_val = build_graph(val_filename + '_train.tsv')
-	shortest_path_dict_val = dict(nx.shortest_path_length(G_val))
+	idx, enames_inv_train, enames_train = slurp(train_dset)
+	_, enames_inv_val, enames_val = slurp(val_filename + '_train.tsv')
+	G_train, _, _ = build_graph(train_dset)
+	#shortest_path_dict_val = dict(nx.shortest_path_length(G_val))
 	shortest_path_dict_train = defaultdict(dict)
 	#idx_dict = dict()
 	#for i_val in shortest_path_dict:
 	#	i_name = enames_inv_val[i_val]
 	#	i_train = enames_train[i_name]
 	#	idx_dict[i_val] = i_train
-	for i in shortest_path_dict_val:
-		name_i = enames_inv_val[i]
-		train_idx_i = enames_train[name_i]
-		for j in shortest_path_dict_val[i]:
+	#reachable = nx.shortest_path_length(G_train,source=16714)
+	#for node in reachable:
+	#	if enames_inv_train[node] == 'ROOT':
+	#		print("FOUND ROOT")
+	for i in range(len(enames_val)):
+		for j in range(i+1, len(enames_val)):
+			name_i = enames_inv_val[i]
+			train_idx_i = enames_train[name_i]
 			name_j = enames_inv_val[j]
 			train_idx_j = enames_train[name_j]
-			shortest_path_dict_train[train_idx_i][train_idx_j] = shortest_path_dict_val[i][j]
+			shortest_path_dict_train[train_idx_i][train_idx_j] = nx.shortest_path_length(G_train, source=train_idx_i, target=train_idx_j)
 
+	print(len(shortest_path_dict_train.keys()))
 	for i in range(opt.interval, opt.max_epoch+1, opt.interval):
 		suffix = '_epoch_'+str(i-1)+'.pth'
 		checkpoint_file = None
@@ -45,7 +51,7 @@ if __name__ == '__main__':
 				break
 		out_file = checkpoint_file[:-4] + '_nn.txt'
 
-		find_shortest_path(None, idx, checkpoint_file, shortest_path_dict_train, epoch=i-1)
+		#find_shortest_path(None, idx, checkpoint_file, shortest_path_dict_train, epoch=i-1)
 		if i + opt.interval > opt.max_epoch:
 			print("find nn for epoch ", str(i))
 			find_nn(val_filename, None, idx, checkpoint_file, enames_train, shortest_path_dict_train, out_file, duplicate_file, n_top=5, epoch=i-1)

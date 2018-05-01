@@ -137,7 +137,8 @@ def find_nn(val_filename, model, idx, checkpoint_file, enames_train, shortest_pa
 				neighbor_str = all_val_strs[n_idx]
 				last_token = output_last_token(neighbor_str)
 				idx2 = enames_train[last_token]
-
+				#print(idx1, idx2)
+				#print(shortest_path_dict[idx1][idx2])
 				neighbors.append((neighbor_str, dist_scores[i][n_idx], shortest_path_dict[idx1][idx2]))
 			neighbors = sorted(neighbors, key = lambda x: x[1])
 
@@ -164,7 +165,7 @@ def find_shortest_path(model, idx, checkpoint_file, shortest_path_dict, result_d
 		model = load_model(idx, checkpoint_file)
 	lt = model.embedding()
 	for idx1 in shortest_path_dict.keys():
-		for idx2 in shortest_path_dict[i]:
+		for idx2 in shortest_path_dict[idx1]:
 			if idx2 <= idx1: #avoid repeated calculation
 				continue
 			true_dist = shortest_path_dict[idx1][idx2] ### undirected graph, to avoid complications in computing shortest path
