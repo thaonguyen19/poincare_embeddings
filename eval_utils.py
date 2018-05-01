@@ -81,12 +81,11 @@ def load_model(idx, checkpoint_file):
 	return model
 
 
-def find_nn(val_filename, model, idx, checkpoint_file, enames_train, enames_val, shortest_path_dict, out_file, duplicate_file, n_top=5, epoch=None): #train_dset
+def find_nn(val_filename, model, idx, checkpoint_file, enames_train, shortest_path_dict, out_file, duplicate_file, n_top=5, epoch=None): #train_dset
 	#GOAL: print n_top top ranked nearest neighbors
 	#how to compute dist given a linkage of packages - for each import, go through all other imports (starting from sklearn), as long as it exceeds the min_dist, break and move on the next search
 	all_val_strs = []
 	all_duplicate_strs = []
-	new_shortest_path_dict = defaultdict(dict)
 
 	with open(val_filename, 'r') as f:
 		for line in f:
@@ -132,14 +131,14 @@ def find_nn(val_filename, model, idx, checkpoint_file, enames_train, enames_val,
 			s = all_val_strs[i]
 			neighbors = []
 			last_token = output_last_token(s)
-			val_idx = enames_val[last_token]
+			idx1 = enames_train[last_token]
 
 			for n_idx in all_neighbors[i, :]:
 				neighbor_str = all_val_strs[n_idx]
 				last_token = output_last_token(neighbor_str)
-				val_idx_compared = enames_val[last_token]
+				idx2 = enames_train[last_token]
 
-				neighbors.append((neighbor_str, dist_scores[i][n_idx], shortest_path_dict[val_idx][val_idx_compared]))
+				neighbors.append((neighbor_str, dist_scores[i][n_idx], shortest_path_dict[idx1][idx2]))
 			neighbors = sorted(neighbors, key = lambda x: x[1])
 
 			fout.write(s + '\n')
@@ -148,7 +147,7 @@ def find_nn(val_filename, model, idx, checkpoint_file, enames_train, enames_val,
 			fout.write('\n')
 
 
-def find_shortest_path(model, idx, checkpoint_file, idx_dict, shortest_path_dict, result_dict=None, epoch=None):
+def find_shortest_path(model, idx, checkpoint_file, shortest_path_dict, result_dict=None, epoch=None):
 	plt_name = 'plt_'
 	if result_dict is not None:
 		for k, v in result_dict.items():
@@ -164,12 +163,11 @@ def find_shortest_path(model, idx, checkpoint_file, idx_dict, shortest_path_dict
 	if model is None:
 		model = load_model(idx, checkpoint_file)
 	lt = model.embedding()
-	for i in shortest_path_dict.keys():
-		for j in shortest_path_dict[i]:
-			if j <= i: #avoid repeated calculation
+	for idx1 in shortest_path_dict.keys():
+		for idx2 in shortest_path_dict[i]:
+			if idx2 <= idx1: #avoid repeated calculation
 				continue
-			idx1, idx2 = idx_dict[i], idx_dict[j]
-			true_dist = shortest_path_dict[i][j] ### undirected graph, to avoid complications in computing shortest path
+			true_dist = shortest_path_dict[idx1][idx2] ### undirected graph, to avoid complications in computing shortest path
 			embed_dist = np.linalg.norm(lt[idx1, :] - lt[idx2, :])
 			Xs.append(true_dist)
 			Ys.append(embed_dist)

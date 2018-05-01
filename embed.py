@@ -81,8 +81,7 @@ def control(queue, types, data, distfn, processes, model_name, idx_dict, shortes
                     % (epoch, elapsed, loss, mrank, mAP, min_rank[0], max_map[0]))
 
             result_dict = {'epoch': epoch, 'loss': round(loss,3), 'meanrank': round(mrank,2), 'mAP': round(mAP,4), 'bestrank': round(min_rank[0],2), 'bestmAP': round(max_map[0],4)}
-            # nearest_neighbor & distance relation evaluation
-            find_shortest_path(model, None, idx_dict, shortest_path_dict, result_dict)
+            #TO DO: write results to txt file
         
         else:
             print("json_log: epoch %d  elapsed %.2f  loss %.3f" % (epoch, elapsed, loss))
@@ -162,10 +161,10 @@ if __name__ == '__main__':
         lr=opt.lr,
     )
 
-    #_, enames_inv = build_graph(opt.dset)
+    #_, enames_inv, _ = build_graph(opt.dset)
     print("Start computing shortest path for file:", opt.valset + '_train.tsv')    
     t1 = time.time()
-    G, enames_inv_val = build_graph(opt.valset + '_train.tsv')
+    G, enames_inv_val, _ = build_graph(opt.valset + '_train.tsv')
     shortest_path_dict = dict(nx.shortest_path_length(G))
     t2 = time.time()
     idx_dict = dict()
