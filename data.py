@@ -73,23 +73,20 @@ def generate_pairs(package_file, dataset, sep='.'):
             package_names = ['ROOT'] + package_names  
             for i in range(len(package_names)-1):
                 high, low = package_names[i], package_names[i+1]
-                mapping[high].add(low)
+                all_names.add(high)
+                if low in all_names:
+                    duplicate.add(low)
+                else:
+                    mapping[high].add(low)
 
     tsv_package_file = package_file[:-6]+dataset+'.tsv'
     tsv_package_file_wo_duplicate = package_file[:-6]+dataset+'_wo_duplicate.tsv' #to check for cycle
     with open(tsv_package_file, 'w') as fout:
         with open(tsv_package_file_wo_duplicate, 'w') as fout_wo:
-            for k, v_set in mapping.items():
+            for k, v_set in mapping.items():#don't add duplicate elements for now
                 for v in v_set:
-                    old_len = len(all_names)
-                    all_names.add(v)
-                    new_len = len(all_names)
-
-                    if old_len == new_len: #duplicate element
-                        duplicate.add(v)
-                    else: #don't add duplicate elements for now
-                        fout.write(v + '\t' + k + '\n') #more specific package comes first
-                        fout_wo.write(v + '\t' + k + '\n')
+                    fout.write(v + '\t' + k + '\n') #more specific package comes first
+                    fout_wo.write(v + '\t' + k + '\n')
 
     duplicate_file_name = package_file[:-6]+'duplicate_'+dataset
     with open(duplicate_file_name, 'w') as fdup:
@@ -111,14 +108,16 @@ def process_duplicate(duplicate_set, file_read, file_write, sep='.'):
     w = int(DEFAULT_WEIGHT/1)
     duplicate_dict = ddict(list)
 
-    with open(file_read, 'r') as fin:
-        for line in fin:
-            tokens = line.strip().split(sep)
-            if tokens[-1] in duplicate_set:
-                if len(tokens) < 2:
-                    continue
-                renamed_token = tokens[-1] + '_' + tokens[-2]
-                duplicate_dict[tokens[-1]].append(renamed_token)
+    with open(file_write, 'a') as fout:
+        with open(file_read, 'r') as fin:
+            for line in fin:
+                tokens = line.strip().split(sep)
+                if tokens[-1] in duplicate_set:
+                    if len(tokens) < 2:
+                        continue
+                    renamed_token = tokens[-1] + '_' + tokens[-2]
+                    duplicate_dict[tokens[-1]].append(renamed_token)
+                    fout.write(renamed_token + '\t' + tokens[-2] + '\n')
 
     with open(file_write, 'a') as fout:
         for token, renamed_token_list in duplicate_dict.items():
