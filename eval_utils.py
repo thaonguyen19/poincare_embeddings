@@ -23,6 +23,17 @@ def build_graph(dataset):
 	return G, enames_inv, enames
 
 
+def check_all_connected(dataset):
+	G, enames_inv, enames = build_graph(dataset)
+	n_nodes = len(G.nodes())
+	for i in range(n_nodes):
+		i_connections = dict(nx.shortest_path_length(G, source=i))
+		for j in range(n_nodes):
+			if j not in i_connections:
+				print(enames_inv[j], enames_inv[i])
+				break
+
+
 def check_cycle(dataset):
 	assert('wo_duplicate' in dataset) #file where 'undirected' edges between duplicated package names have not been added
 	G, enames_inv, _ = build_graph(dataset)

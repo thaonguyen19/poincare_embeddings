@@ -59,37 +59,44 @@ def generate_train_val(package_file_sorted, n_val=1000, sep='.'):
     return sorted_val_file
 
 
+def create_file_wo_duplicate(tsv_package_file): #to check for cycle
+    tsv_package_file_wo_duplicate = tsv_package_file[:-4] + '_wo_duplicate.tsv'
+    with open(tsv_package_file, 'r') as fin:
+        with open(tsv_package_file_wo_duplicate, 'w') as fout:
+            for line in fin:
+                fout.write(line)
+
+
 def generate_pairs(package_file, dataset, sep='.'): 
     #package_file name has format "*_sorted"
-    mapping = ddict(set) #map from higher order element to the all direct children in the hierarchy
-    all_names = set()
+    #mapping = ddict(set) #map from higher order element to the all direct children in the hierarchy
+    all_last_tokens = set()
     duplicate = set() #assume the immediate parent package names would be different
+    tsv_package_file = package_file[:-6]+dataset+'.tsv'
 
     with open(package_file, 'r') as f:
-        for line in f:
-            package_names = line.strip().split(sep)
-            if len(package_names) < 2:
-                continue
-            package_names = ['ROOT'] + package_names  
-            for i in range(len(package_names)-1):
-                high, low = package_names[i], package_names[i+1]
-                all_names.add(high)
-                if low in all_names:
-                    duplicate.add(low)
+        with open(tsv_package_file, 'w') as fout:
+            for line in f:
+                package_names = line.strip().split(sep)
+                if len(package_names) < 2:
+                    continue
+                package_names = ['ROOT'] + package_names  
+                for i in range(len(package_names)-2):
+                    high, low = package_names[i], package_names[i+1]
+                    fout.write(low + '\t' + high + '\n') #more specific package comes first
+                    #mapping[high].add(low)
+                
+                #process the last pair separately to check for duplicates
+                if package_names[-1] in all_last_tokens:
+                    duplicate.add(package_names[-1])
                 else:
-                    all_names.add(low)
-                mapping[high].add(low)
+                    all_last_tokens.add(package_names[-1])
 
-    tsv_package_file = package_file[:-6]+dataset+'.tsv'
-    tsv_package_file_wo_duplicate = package_file[:-6]+dataset+'_wo_duplicate.tsv' #to check for cycle
-    with open(tsv_package_file, 'w') as fout:
-        with open(tsv_package_file_wo_duplicate, 'w') as fout_wo:
-            for k, v_set in mapping.items():
-                for v in v_set:
-                    if v in duplicate: #don't add duplicate elements for now
-                        continue
-                    fout.write(v + '\t' + k + '\n') #more specific package comes first
-                    fout_wo.write(v + '\t' + k + '\n')
+        # for k, v_set in mapping.items():
+        #     for v in v_set:
+        #         if v in duplicate: #don't add duplicate elements for now
+        #             continue
+        #         fout.write(v + '\t' + k + '\n') #more specific package comes first
 
     duplicate_file_name = package_file[:-6]+'duplicate_'+dataset
     with open(duplicate_file_name, 'w') as fdup:
@@ -109,17 +116,19 @@ def get_duplicate(duplicate_file_name):
 
 def process_duplicate(duplicate_set, file_read, file_write, sep='.'):
     w = int(DEFAULT_WEIGHT/1)
-    duplicate_dict = ddict(list)
+    duplicate_dict = ddict(set)
 
     with open(file_write, 'a') as fout:
         with open(file_read, 'r') as fin:
             for line in fin:
                 tokens = line.strip().split(sep)
-                if tokens[-1] in duplicate_set:
-                    if len(tokens) < 2:
-                        continue
+                if tokens[-1] not in duplicate_set:
+                    fout.write(tokens[-1] + '\t' + tokens[-2] + '\n')
+                else:
+                    #if len(tokens) < 2:
+                    #    continue
                     renamed_token = tokens[-1] + '_' + tokens[-2]
-                    duplicate_dict[tokens[-1]].append(renamed_token)
+                    duplicate_dict[tokens[-1]].add(renamed_token)
                     fout.write(renamed_token + '\t' + tokens[-2] + '\n')
 
     with open(file_write, 'a') as fout:
@@ -182,9 +191,10 @@ def slurp(fin, fparse=parse_line, symmetrize=False):
 
 if __name__ == '__main__':
     ### use command line sort <init file> -o <sorted file> to obtain a sorted file
-    main_file = './package/new/functions_04182018_sorted' 
-    debug_file = generate_debug_set(main_file)
-    for package_file_sorted in [main_file, debug_file]:
+    main_file = './package/functions_04182018_val_sorted' 
+    #debug_file = generate_debug_set(main_file)
+    for package_file_sorted in [main_file]:#, debug_file]:
         sorted_val_file = generate_train_val(package_file_sorted) 
         duplicate_set, duplicate_file_name, tsv_package_file = generate_pairs(package_file_sorted, 'train')
+        create_file_wo_duplicate(tsv_package_file)
         process_duplicate(duplicate_set, package_file_sorted, tsv_package_file)
