@@ -77,14 +77,17 @@ def generate_pairs(package_file, dataset, sep='.'):
                 if low in all_names:
                     duplicate.add(low)
                 else:
-                    mapping[high].add(low)
+                    all_names.add(low)
+                mapping[high].add(low)
 
     tsv_package_file = package_file[:-6]+dataset+'.tsv'
     tsv_package_file_wo_duplicate = package_file[:-6]+dataset+'_wo_duplicate.tsv' #to check for cycle
     with open(tsv_package_file, 'w') as fout:
         with open(tsv_package_file_wo_duplicate, 'w') as fout_wo:
-            for k, v_set in mapping.items():#don't add duplicate elements for now
+            for k, v_set in mapping.items():
                 for v in v_set:
+                    if v in duplicate: #don't add duplicate elements for now
+                        continue
                     fout.write(v + '\t' + k + '\n') #more specific package comes first
                     fout_wo.write(v + '\t' + k + '\n')
 

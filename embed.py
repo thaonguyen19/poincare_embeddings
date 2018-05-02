@@ -48,7 +48,7 @@ def ranking(types, model, distfn): #types here is adjacency matrix
     return np.mean(ranks), np.mean(ap_scores)
 
 
-def control(queue, types, data, distfn, processes, model_name, idx_dict, shortest_path_dict, opt):
+def control(queue, types, data, distfn, processes, model_name, opt):
     out_file = 'nearest_neighbor_results.txt'
     min_rank = (np.Inf, -1)
     max_map = (0, -1)
@@ -80,8 +80,12 @@ def control(queue, types, data, distfn, processes, model_name, idx_dict, shortes
             print("EVAL: epoch %d  elapsed %.2f  loss %.3f  mean_rank %.2f  mAP %.4f  best_rank %.2f  best_mAP %.4f" \
                     % (epoch, elapsed, loss, mrank, mAP, min_rank[0], max_map[0]))
 
-            result_dict = {'epoch': epoch, 'loss': round(loss,3), 'meanrank': round(mrank,2), 'mAP': round(mAP,4), 'bestrank': round(min_rank[0],2), 'bestmAP': round(max_map[0],4)}
+            results = [('epoch', epoch), ('loss', round(loss,3)), ('meanrank', round(mrank,2)), ('mAP', round(mAP,4)), ('bestrank', round(min_rank[0],2)), ('bestmAP', round(max_map[0],4))]
             #TO DO: write results to txt file
+            with open(opt.fout, 'a') as fout:
+                for k, v in results:
+                    fout.write(k + '\t' + str(v))
+                fout.write('\n')
         
         else:
             print("json_log: epoch %d  elapsed %.2f  loss %.3f" % (epoch, elapsed, loss))
@@ -95,7 +99,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train Poincare Embeddings')
     parser.add_argument('-dim', help='Embedding dimension', type=int)
     parser.add_argument('-dset', help='Dataset to embed', type=str)
-    parser.add_argument('-fout', help='Filename where to store model', type=str)
+    parser.add_argument('-fout', help='Filename where to write model results', type=str)
     parser.add_argument('-valset', help='Validation Dataset (optional)', type=str, default='')
     parser.add_argument('-dupset', help='Duplicate Data', type=str)
     parser.add_argument('-distfn', help='Distance function', type=str)
@@ -162,17 +166,17 @@ if __name__ == '__main__':
     )
 
     #_, enames_inv, _ = build_graph(opt.dset)
-    print("Start computing shortest path for file:", opt.valset + '_train.tsv')    
-    t1 = time.time()
-    G, enames_inv_val, _ = build_graph(opt.valset + '_train.tsv')
-    shortest_path_dict = dict(nx.shortest_path_length(G))
-    t2 = time.time()
-    idx_dict = dict()
-    for i_val in shortest_path_dict:
-        i_name = enames_inv_val[i_val]
-        i_train = enames_train[i_name]
-        idx_dict[i_val] = i_train
-    print("Time to compute shortest paths for all nodes:", str(t2-t1))
+    #print("Start computing shortest path for file:", opt.valset + '_train.tsv')    
+    #t1 = time.time()
+    #G, enames_inv_val, _ = build_graph(opt.valset + '_train.tsv')
+    #shortest_path_dict = dict(nx.shortest_path_length(G))
+    #t2 = time.time()
+    #idx_dict = dict()
+    #for i_val in shortest_path_dict:
+    #    i_name = enames_inv_val[i_val]
+    #    i_train = enames_train[i_name]
+    #    idx_dict[i_val] = i_train
+    #print("Time to compute shortest paths for all nodes:", str(t2-t1))
 
     # if nproc == 0, run single threaded, otherwise run Hogwild
     if opt.nproc == 0:
@@ -191,7 +195,7 @@ if __name__ == '__main__':
 
         ctrl = mp.Process(
             target=control,
-            args=(queue, adjacency, data, distfn, processes, model_name, idx_dict, shortest_path_dict, opt)
+            args=(queue, adjacency, data, distfn, processes, model_name, opt)
         )
         ctrl.start()
         ctrl.join()
