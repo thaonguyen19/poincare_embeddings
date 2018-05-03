@@ -27,10 +27,11 @@ def check_all_connected(dataset):
 	G, enames_inv, enames = build_graph(dataset)
 	n_nodes = len(G.nodes())
 	for i in range(n_nodes):
+		print(i)
 		i_connections = dict(nx.shortest_path_length(G, source=i))
 		for j in range(n_nodes):
 			if j not in i_connections:
-				print(enames_inv[j], enames_inv[i])
+				print('#########', enames_inv[j], enames_inv[i])
 				break
 
 
@@ -175,6 +176,7 @@ def find_shortest_path(model, idx, checkpoint_file, shortest_path_dict, result_d
 	if model is None:
 		model = load_model(idx, checkpoint_file)
 	lt = model.embedding()
+
 	for idx1 in shortest_path_dict.keys():
 		for idx2 in shortest_path_dict[idx1]:
 			if idx2 <= idx1: #avoid repeated calculation
@@ -196,8 +198,7 @@ def find_shortest_path(model, idx, checkpoint_file, shortest_path_dict, result_d
 	plt.ylabel('Embedded distance')
 	plt.savefig(plt_name+'_normalized.png', format='png')
 	
-	return shortest_path_dict
-
 
 if __name__ == '__main__':
 	check_cycle('./package/functions_04182018_train_wo_duplicate.tsv')
+	check_all_connected('./package/functions_04182018_train.tsv')

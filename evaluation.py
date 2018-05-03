@@ -18,9 +18,9 @@ if __name__ == '__main__':
 	opt.dir = '/lfs/hyperion/0/thaonguyen/poincare_embeddings'
 	opt.max_epoch = 300
 	opt.interval = 25
-	idx, enames_inv_train, enames_train = slurp(train_dset)
+	idx, _, _ = slurp(train_dset)
 	_, enames_inv_val, enames_val = slurp(val_filename + '_train.tsv')
-	G_train, _, _ = build_graph(train_dset)
+	G_train, enames_inv_train, enames_train = build_graph(train_dset)
 	#shortest_path_dict_val = dict(nx.shortest_path_length(G_val))
 	shortest_path_dict_train = defaultdict(dict)
 	#idx_dict = dict()
@@ -38,9 +38,10 @@ if __name__ == '__main__':
 			train_idx_i = enames_train[name_i]
 			name_j = enames_inv_val[j]
 			train_idx_j = enames_train[name_j]
-			shortest_path_dict_train[train_idx_i][train_idx_j] = nx.shortest_path_length(G_train, source=train_idx_i, target=train_idx_j)
+			dist_ij = nx.shortest_path_length(G_train, source=train_idx_i, target=train_idx_j)
+			shortest_path_dict_train[train_idx_i][train_idx_j] = dist_ij
+			shortest_path_dict_train[train_idx_j][train_idx_i] = dist_ij
 
-	print(len(shortest_path_dict_train.keys()))
 	for i in range(opt.interval, opt.max_epoch+1, opt.interval):
 		suffix = '_epoch_'+str(i-1)+'.pth'
 		checkpoint_file = None
@@ -49,10 +50,11 @@ if __name__ == '__main__':
 				checkpoint_file = file
 				print("Found file ", file)
 				break
-		out_file = checkpoint_file[:-4] + '_nn.txt'
-
-		#find_shortest_path(None, idx, checkpoint_file, shortest_path_dict_train, epoch=i-1)
-		if i + opt.interval > opt.max_epoch:
-			print("find nn for epoch ", str(i))
-			find_nn(val_filename, None, idx, checkpoint_file, enames_train, shortest_path_dict_train, out_file, duplicate_file, n_top=5, epoch=i-1)
+		if checkpoint_file is not None:
+			out_file = checkpoint_file[:-4] + '_nn.txt'
+			find_shortest_path(None, idx, checkpoint_file, shortest_path_dict_train, epoch=i-1)
+			
+			if i + opt.interval > opt.max_epoch:
+				print("find nn for epoch ", str(i))
+				find_nn(val_filename, None, idx, checkpoint_file, enames_train, shortest_path_dict_train, out_file, duplicate_file, n_top=5, epoch=i-1)
 
