@@ -20,7 +20,7 @@ def build_graph(dataset):
 	for r in range(idx.shape[0]):
 		row = idx[r, :]
 		G.add_edge(row[1], row[0])
-	return G, enames_inv, enames
+	return G, enames_inv, dict(enames)
 
 
 def check_all_connected(dataset):
@@ -93,19 +93,28 @@ def load_model(idx, checkpoint_file):
 	return model
 
 
+def output_last_token(s, duplicate_file):
+	all_duplicate_strs = []
+	with open(duplicate_file, 'r') as f:
+		for line in f:
+			all_duplicate_strs.append(line.strip())
+
+	tokens = s.split(sep='.')
+	token = tokens[-1]
+	if token in all_duplicate_strs:
+		token = token + '_' + tokens[-2]
+	return token
+
+
 def find_nn(val_filename, model, idx, checkpoint_file, enames_train, shortest_path_dict, out_file, duplicate_file, n_top=5, epoch=None): #train_dset
 	#GOAL: print n_top top ranked nearest neighbors
 	#how to compute dist given a linkage of packages - for each import, go through all other imports (starting from sklearn), as long as it exceeds the min_dist, break and move on the next search
 	all_val_strs = []
-	all_duplicate_strs = []
 
 	with open(val_filename, 'r') as f:
 		for line in f:
 			all_val_strs.append(line.strip())
 
-	with open(duplicate_file, 'r') as f:
-		for line in f:
-			all_duplicate_strs.append(line.strip())
 
 	print("VAL SET SIZE:", len(all_val_strs))
 	if model is None:
@@ -114,18 +123,11 @@ def find_nn(val_filename, model, idx, checkpoint_file, enames_train, shortest_pa
 	n_val = len(all_val_strs)
 	dist_scores = np.zeros((n_val, n_val))
 
-	def output_last_token(s):
-		tokens = s.split(sep='.')
-		token = tokens[-1]
-		if token in all_duplicate_strs:
-			token = token + '_' + tokens[-2]
-		return token
-
 	for i in range(n_val):
-		token = output_last_token(all_val_strs[i])
+		token = output_last_token(all_val_strs[i], duplicate_file)
 
 		for j in range(i+1, n_val):
-			token_compared = output_last_token(all_val_strs[j])
+			token_compared = output_last_token(all_val_strs[j], duplicate_file)
 			idx1 = enames_train[token]
 			idx2 = enames_train[token_compared]
 			dist = np.linalg.norm(lt[idx1, :] - lt[idx2, :])
@@ -142,15 +144,13 @@ def find_nn(val_filename, model, idx, checkpoint_file, enames_train, shortest_pa
 		for i in range(n_val):
 			s = all_val_strs[i]
 			neighbors = []
-			last_token = output_last_token(s)
+			last_token = output_last_token(s, duplicate_file)
 			idx1 = enames_train[last_token]
 
 			for n_idx in all_neighbors[i, :]:
 				neighbor_str = all_val_strs[n_idx]
-				last_token = output_last_token(neighbor_str)
+				last_token = output_last_token(neighbor_str, duplicate_file)
 				idx2 = enames_train[last_token]
-				#print(idx1, idx2)
-				#print(shortest_path_dict[idx1][idx2])
 				neighbors.append((neighbor_str, dist_scores[i][n_idx], shortest_path_dict[idx1][idx2]))
 			neighbors = sorted(neighbors, key = lambda x: x[1])
 

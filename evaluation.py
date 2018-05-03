@@ -19,19 +19,22 @@ if __name__ == '__main__':
 	opt.max_epoch = 300
 	opt.interval = 25
 	idx, _, _ = slurp(train_dset)
-	_, enames_inv_val, enames_val = slurp(val_filename + '_train.tsv')
+	#_, enames_inv_val, enames_val = build_graph(val_filename + '_train.tsv')
 	G_train, enames_inv_train, enames_train = build_graph(train_dset)
-	#shortest_path_dict_val = dict(nx.shortest_path_length(G_val))
 	shortest_path_dict_train = defaultdict(dict)
-	#idx_dict = dict()
-	#for i_val in shortest_path_dict:
-	#	i_name = enames_inv_val[i_val]
-	#	i_train = enames_train[i_name]
-	#	idx_dict[i_val] = i_train
-	#reachable = nx.shortest_path_length(G_train,source=16714)
-	#for node in reachable:
-	#	if enames_inv_train[node] == 'ROOT':
-	#		print("FOUND ROOT")
+
+	ecount = count()
+	enames_val = defaultdict(ecount.__next__)
+	enames_inv_val = dict()
+	with open(val_filename, 'r') as fval:
+		for line in fval:
+			last_token = output_last_token(line.strip(), duplicate_file)
+			enames_inv_val[enames_val[last_token]] = last_token
+
+	enames_val = dict(enames_val)
+	print(len(enames_val.values()), min(enames_val.values()), max(enames_val.values()))
+	print(len(enames_inv_val.keys()), min(enames_inv_val.keys()), max(enames_inv_val.keys()))
+
 	for i in range(len(enames_val)):
 		for j in range(i+1, len(enames_val)):
 			name_i = enames_inv_val[i]
@@ -53,7 +56,7 @@ if __name__ == '__main__':
 		if checkpoint_file is not None:
 			out_file = checkpoint_file[:-4] + '_nn.txt'
 			find_shortest_path(None, idx, checkpoint_file, shortest_path_dict_train, epoch=i-1)
-			
+
 			if i + opt.interval > opt.max_epoch:
 				print("find nn for epoch ", str(i))
 				find_nn(val_filename, None, idx, checkpoint_file, enames_train, shortest_path_dict_train, out_file, duplicate_file, n_top=5, epoch=i-1)
