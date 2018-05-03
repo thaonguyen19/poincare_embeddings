@@ -3,6 +3,7 @@ import argparse
 import os
 from data import slurp
 from collections import defaultdict
+from itertools import count
 
 val_filename = './package/functions_04182018_val'
 duplicate_file = './package/functions_04182018_duplicate_train'
@@ -15,8 +16,8 @@ if __name__ == '__main__':
 	#parser.add_argument('-max_epoch', help='Maximum epoch', type=int)
 	#parser.add_argument('-interval', help='Interval to evaluate', type=int)
 	opt = parser.parse_args()
-	opt.dir = '/lfs/hyperion/0/thaonguyen/poincare_embeddings'
-	opt.max_epoch = 300
+	opt.dir = '/lfs/hyperion/0/thaonguyen/poincare_embeddings/pickles_0503/'
+	opt.max_epoch = 400
 	opt.interval = 25
 	idx, _, _ = slurp(train_dset)
 	#_, enames_inv_val, enames_val = build_graph(val_filename + '_train.tsv')
@@ -32,8 +33,8 @@ if __name__ == '__main__':
 			enames_inv_val[enames_val[last_token]] = last_token
 
 	enames_val = dict(enames_val)
-	print(len(enames_val.values()), min(enames_val.values()), max(enames_val.values()))
-	print(len(enames_inv_val.keys()), min(enames_inv_val.keys()), max(enames_inv_val.keys()))
+	#print(len(enames_val.values()), min(enames_val.values()), max(enames_val.values()))
+	#print(len(enames_inv_val.keys()), min(enames_inv_val.keys()), max(enames_inv_val.keys()))
 
 	for i in range(len(enames_val)):
 		for j in range(i+1, len(enames_val)):
@@ -44,7 +45,8 @@ if __name__ == '__main__':
 			dist_ij = nx.shortest_path_length(G_train, source=train_idx_i, target=train_idx_j)
 			shortest_path_dict_train[train_idx_i][train_idx_j] = dist_ij
 			shortest_path_dict_train[train_idx_j][train_idx_i] = dist_ij
-
+		shortest_path_dict_train[train_idx_i][train_idx_i] = 0
+		
 	for i in range(opt.interval, opt.max_epoch+1, opt.interval):
 		suffix = '_epoch_'+str(i-1)+'.pth'
 		checkpoint_file = None
@@ -55,9 +57,10 @@ if __name__ == '__main__':
 				break
 		if checkpoint_file is not None:
 			out_file = checkpoint_file[:-4] + '_nn.txt'
+			checkpoint_file = opt.dir+checkpoint_file
 			find_shortest_path(None, idx, checkpoint_file, shortest_path_dict_train, epoch=i-1)
 
-			if i + opt.interval > opt.max_epoch:
+			if i == 225: #+ opt.interval > opt.max_epoch:
 				print("find nn for epoch ", str(i))
 				find_nn(val_filename, None, idx, checkpoint_file, enames_train, shortest_path_dict_train, out_file, duplicate_file, n_top=5, epoch=i-1)
-
+				#find_shortest_path(None, idx, checkpoint_file, shortest_path_dict_train, epoch=i-1)

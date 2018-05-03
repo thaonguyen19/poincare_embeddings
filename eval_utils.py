@@ -125,14 +125,16 @@ def find_nn(val_filename, model, idx, checkpoint_file, enames_train, shortest_pa
 
 	for i in range(n_val):
 		token = output_last_token(all_val_strs[i], duplicate_file)
+		idx1 = enames_train[token]
 
 		for j in range(i+1, n_val):
 			token_compared = output_last_token(all_val_strs[j], duplicate_file)
-			idx1 = enames_train[token]
 			idx2 = enames_train[token_compared]
 			dist = np.linalg.norm(lt[idx1, :] - lt[idx2, :])
 			dist_scores[i][j] = dist
 			dist_scores[j][i] = dist
+
+		dist_scores[i][i] = float('inf') #not to choose the same string as nn
 
 	all_neighbors = np.argpartition(dist_scores, n_top) #find n_top with smallest distances in each row
 	with open(out_file, 'a') as fout:
@@ -156,7 +158,7 @@ def find_nn(val_filename, model, idx, checkpoint_file, enames_train, shortest_pa
 
 			fout.write(s + '\n')
 			for j in range(n_top):
-				fout.write(neighbors[j][0] + '' + neighbors[j][1] + '' + neighbors[j][2] + '\n')
+				fout.write(neighbors[j][0] + '' + str(neighbors[j][1]) + '' + str(neighbors[j][2]) + '\n')
 			fout.write('\n')
 
 
@@ -186,17 +188,19 @@ def find_shortest_path(model, idx, checkpoint_file, shortest_path_dict, result_d
 			Xs.append(true_dist)
 			Ys.append(embed_dist)
 
+	print(Xs)
 	plt.scatter(Xs, Ys, s=1, c='b')
 	plt.xlabel('True distance')
 	plt.ylabel('Embedded distance')
 	plt.savefig(plt_name+'.png', format='png')
-	
-	X_norms = np.array(Xs)/np.max(Xs)
-	Y_norms = np.array(Ys)/np.max(Ys)
-	plt.scatter(X_norms, Y_norms, s=1, c='b')
-	plt.xlabel('True distance')
-	plt.ylabel('Embedded distance')
-	plt.savefig(plt_name+'_normalized.png', format='png')
+
+	if np.max(Xs) != 0 and np.max(Ys) != 0:
+		X_norms = np.array(Xs)/np.max(Xs)
+		Y_norms = np.array(Ys)/np.max(Ys)
+		plt.scatter(X_norms, Y_norms, s=1, c='b')
+		plt.xlabel('True distance')
+		plt.ylabel('Embedded distance')
+		plt.savefig(plt_name+'_normalized.png', format='png')
 	
 
 if __name__ == '__main__':
