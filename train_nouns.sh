@@ -25,4 +25,4 @@ python3 embed.py \
        -dset wordnet/noun_closure.tsv \
        -fout nouns_results.txt \
        -batchsize 50 \
-       -eval_each 100 \
+       -eval_each 100

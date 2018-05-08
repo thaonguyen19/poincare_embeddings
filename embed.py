@@ -84,7 +84,7 @@ def control(queue, types, data, distfn, processes, model_name, opt):
             #TO DO: write results to txt file
             with open(opt.fout, 'a') as fout:
                 for k, v in results:
-                    fout.write(k + '\t' + str(v))
+                    fout.write(k + '\t' + str(v) + '\t')
                 fout.write('\n')
         
         else:
