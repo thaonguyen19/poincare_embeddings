@@ -10,6 +10,7 @@ from collections import defaultdict as ddict
 import numpy as np
 import torch as th
 import itertools
+import random
 
 DEFAULT_WEIGHT = 1
 
@@ -23,6 +24,20 @@ def generate_debug_set(package_file_sorted, n_test=300):
             for l in test_lines:
                 fout.write(l)
     return debug_file_name
+
+def generate_train_val2(package_file_sorted, n_val=1000, sep='.'):
+    assert('sorted' in package_file_sorted)
+    sorted_val_file = package_file_sorted[:-6]+'val'
+    val_candidates = []
+    with open(package_file_sorted, 'r') as f:
+        for line in f:
+            if random.uniform(0,1) < 1.0/32:
+                val_candidates.append(line)
+
+    with open(sorted_val_file, 'w') as val_f:
+        for line in val_candidates:
+            val_f.write(line)
+    return sorted_val_file
 
 
 def generate_train_val(package_file_sorted, n_val=1000, sep='.'):
@@ -69,13 +84,13 @@ def create_file_wo_duplicate(tsv_package_file): #to check for cycle
 
 def generate_pairs(package_file, dataset, sep='.'): 
     #package_file name has format "*_sorted"
-    #mapping = ddict(set) #map from higher order element to the all direct children in the hierarchy
+    mapping = ddict(set) #map from higher order element to the all direct children in the hierarchy
     all_last_tokens = set()
     duplicate = set() #assume the immediate parent package names would be different
     tsv_package_file = package_file[:-6]+dataset+'.tsv'
 
-    with open(package_file, 'r') as f:
-        with open(tsv_package_file, 'w') as fout:
+    with open(tsv_package_file, 'w') as fout:
+        with open(package_file, 'r') as f:
             for line in f:
                 package_names = line.strip().split(sep)
                 if len(package_names) < 2:
@@ -83,8 +98,8 @@ def generate_pairs(package_file, dataset, sep='.'):
                 package_names = ['ROOT'] + package_names  
                 for i in range(len(package_names)-2):
                     high, low = package_names[i], package_names[i+1]
-                    fout.write(low + '\t' + high + '\n') #more specific package comes first
-                    #mapping[high].add(low)
+                    #fout.write(low + '\t' + high + '\n') #more specific package comes first
+                    mapping[high].add(low)
                 
                 #process the last pair separately to check for duplicates
                 if package_names[-1] in all_last_tokens:
@@ -92,11 +107,11 @@ def generate_pairs(package_file, dataset, sep='.'):
                 else:
                     all_last_tokens.add(package_names[-1])
 
-        # for k, v_set in mapping.items():
-        #     for v in v_set:
-        #         if v in duplicate: #don't add duplicate elements for now
-        #             continue
-        #         fout.write(v + '\t' + k + '\n') #more specific package comes first
+        for k, v_set in mapping.items():
+            for v in v_set:
+                #if v in duplicate: #don't add duplicate elements for now
+                #    continue
+                fout.write(v + '\t' + k + '\n') #more specific package comes first
 
     duplicate_file_name = package_file[:-6]+'duplicate_'+dataset
     with open(duplicate_file_name, 'w') as fdup:
@@ -191,10 +206,10 @@ def slurp(fin, fparse=parse_line, symmetrize=False):
 
 if __name__ == '__main__':
     ### use command line sort <init file> -o <sorted file> to obtain a sorted file
-    main_file = './package/functions_04182018_val_sorted' 
-    #debug_file = generate_debug_set(main_file)
-    for package_file_sorted in [main_file]:#, debug_file]:
-        sorted_val_file = generate_train_val(package_file_sorted) 
+    main_file = './package/functions_04182018_sorted' 
+    debug_file = generate_debug_set(main_file)
+    for package_file_sorted in [main_file, debug_file]:
+        sorted_val_file = generate_train_val2(package_file_sorted) 
         duplicate_set, duplicate_file_name, tsv_package_file = generate_pairs(package_file_sorted, 'train')
         create_file_wo_duplicate(tsv_package_file)
         process_duplicate(duplicate_set, package_file_sorted, tsv_package_file)

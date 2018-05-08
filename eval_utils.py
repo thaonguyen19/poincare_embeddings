@@ -206,5 +206,5 @@ def find_shortest_path(model, idx, checkpoint_file, shortest_path_dict, result_d
 	
 
 if __name__ == '__main__':
-	check_cycle('./package/functions_04182018_train_wo_duplicate.tsv')
+	#check_cycle('./package/functions_04182018_train_wo_duplicate.tsv')
 	check_all_connected('./package/functions_04182018_train.tsv')
