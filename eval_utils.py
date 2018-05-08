@@ -153,6 +153,7 @@ def find_nn(val_filename, model, idx, checkpoint_file, enames_train, shortest_pa
 				neighbor_str = all_val_strs[n_idx]
 				last_token = output_last_token(neighbor_str, duplicate_file)
 				idx2 = enames_train[last_token]
+				print(idx1, idx2)
 				neighbors.append((neighbor_str, dist_scores[i][n_idx], shortest_path_dict[idx1][idx2]))
 			neighbors = sorted(neighbors, key = lambda x: x[1])
 
@@ -188,11 +189,11 @@ def find_shortest_path(model, idx, checkpoint_file, shortest_path_dict, result_d
 			Xs.append(true_dist)
 			Ys.append(embed_dist)
 
-	print(Xs)
 	plt.scatter(Xs, Ys, s=1, c='b')
 	plt.xlabel('True distance')
 	plt.ylabel('Embedded distance')
 	plt.savefig(plt_name+'.png', format='png')
+	plt.close()
 
 	if np.max(Xs) != 0 and np.max(Ys) != 0:
 		X_norms = np.array(Xs)/np.max(Xs)
@@ -201,6 +202,7 @@ def find_shortest_path(model, idx, checkpoint_file, shortest_path_dict, result_d
 		plt.xlabel('True distance')
 		plt.ylabel('Embedded distance')
 		plt.savefig(plt_name+'_normalized.png', format='png')
+		plt.close()
 	
 
 if __name__ == '__main__':

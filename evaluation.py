@@ -37,6 +37,7 @@ if __name__ == '__main__':
 	#print(len(enames_inv_val.keys()), min(enames_inv_val.keys()), max(enames_inv_val.keys()))
 
 	for i in range(len(enames_val)):
+		print(i)
 		for j in range(i+1, len(enames_val)):
 			name_i = enames_inv_val[i]
 			train_idx_i = enames_train[name_i]
@@ -55,7 +56,7 @@ if __name__ == '__main__':
 				checkpoint_file = file
 				print("Found file ", file)
 				break
-		if checkpoint_file is not None:
+		if checkpoint_file is not None and i == 225:
 			out_file = checkpoint_file[:-4] + '_nn.txt'
 			checkpoint_file = opt.dir+checkpoint_file
 			find_shortest_path(None, idx, checkpoint_file, shortest_path_dict_train, epoch=i-1)
