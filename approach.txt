@@ -1,0 +1,37 @@
+1. How to process data from 'functions' file:
+- choose randomly ~1000 lines for validation
+- generate pairs:
+
+> for tokens that are not the last ones in a line:
+create a dictionary that maps each higher order element to the set of all of its direct children in the hierarchy. Write each pair of (higher order element, its child) to a tsv file.
+eg. 'numpy.lib.polynomial.polysub' --> ('lib', 'numpy'), ('polynomial', 'lib')
+
+> for tokens that are the last in a line:
+create a set to save all last tokens
+check if a last token is already in the set. If it's, then add it to the set contains all duplicate package names. Write all the duplicate package names to a duplicate file.
+
+> return duplicate file & the partial tsv file
+
+- create file without duplicate: copy edges from the current partial tsv file over - to check for cycles
+
+- process duplicate: 
+go through each line of 'functions' again. For each last token, if it's not in the duplicate set, then add the pair of (last token, second to last token) to the tsv file (eg. ('polysub', 'polynomial')). Otherwise, create a suffix with the name of the second to last token (to differentiate from other duplicate package names) and then add the renamed pair to the tsv file (eg. ('polysub_polynomial', 'polynomial')). Also create mapping of the duplicate package name to all different renamed versions of that package (eg. 'polysub': ['polysub_polynomial', 'polysub_tests', ...]) and then for each entry in that dictionary, create an edge between every pair of renamed packages with the same root name and add that to the tsv file (eg. ('polysub_polynomial', 'polysub_tests'), ('polysub_tests', 'polysub_polynomial')).
+
+> Sanity check: build an undirected graph with networkx, make sure that every pair of nodes is connected (i.e. each node is reachable by all other nodes)
+
+
+2. Training:
+Adhere to the training procedure from the original repo (by Facebook AI Research). 
+Change batch size from 50 to 64 (to scale with the number of nodes) and evaluate every 25 epochs by computing the mean rank of neighbors (when we rank all the nodes in terms of probabilites of being connected to a certain node) and mAP (for predicting whether any two nodes are connected) 
+
+3. Evaluation:
+first create a shortest_path_dict to store true distance from each node to all the others in the val set: read in each line from the val set, extract last token and find the corresponding index in the train set (using enames). All entries in shortest_path_dict will be in terms of train index, so that we can use the same index to look up the embedding matrix. Since graph is undirected, to save space, shortest_path_dict stores dist from a node to only nodes of larger indices.
+
+- Plot embedding distance vs true distance: 
+iterate through each key in shortest_path_dict: for all the other nodes larger than the key (i.e. loop through value set), use the node indices to compute the embedding distance.
+Obtain scatter plot from the list of embedding distances and true distances.
+
+- Find nearest neighbor: 
+Computing similarity between package import statements mainly based on last token embeddings: compute a dist_scores matrix of size (n_val, n_val) to store the embedding distance between each line in the val set with all others. 
+Use np.argpartition to find 5 indices (based on val set) that give yield 5 smallest distances in each row
+For each row, convert the 'neighbor' indices to actual strings in the val set and write to a file: use the 'neighbor' strings and their corresponding last tokens to look up train indices and thus the true distances in the shortest_path_dict, look up embedding distance in dist_scores using val indices.

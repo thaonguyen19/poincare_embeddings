@@ -163,7 +163,7 @@ def find_nn(val_filename, model, idx, checkpoint_file, enames_train, shortest_pa
 
 			fout.write(s + '\n')
 			for j in range(n_top):
-				fout.write(neighbors[j][0] + '' + str(neighbors[j][1]) + '' + str(neighbors[j][2]) + '\n')
+				fout.write(neighbors[j][0] + '\t' + str(neighbors[j][1]) + '\t' + str(neighbors[j][2]) + '\n')
 			fout.write('\n')
 
 
