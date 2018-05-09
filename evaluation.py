@@ -17,8 +17,8 @@ if __name__ == '__main__':
 	#parser.add_argument('-max_epoch', help='Maximum epoch', type=int)
 	#parser.add_argument('-interval', help='Interval to evaluate', type=int)
 	opt = parser.parse_args()
-	opt.dir = '/lfs/hyperion2/0/thaonguyen/poincare_embeddings/trained_models_0505/'
-	opt.max_epoch = 925
+	opt.dir = '/lfs/hyperion/0/thaonguyen/poincare_embeddings/'
+	opt.max_epoch = 375
 	opt.interval = 25
 	idx, _, _ = slurp(train_dset)
 	#_, enames_inv_val, enames_val = build_graph(val_filename + '_train.tsv')
@@ -58,7 +58,7 @@ if __name__ == '__main__':
 			shortest_path_dict_train[train_idx_i][train_idx_i] = 0
 		shortest_path_dict_train = dict(shortest_path_dict_train)
 		pickle.dump(shortest_path_dict_train, open(shortest_path_dict_file, 'wb'))
-
+	
 	for i in range(opt.interval, opt.max_epoch+1, opt.interval):
 		suffix = '_epoch_'+str(i-1)+'.pth'
 		checkpoint_file = None
@@ -70,9 +70,10 @@ if __name__ == '__main__':
 		if checkpoint_file is not None:
 			out_file = checkpoint_file[:-4] + '_nn.txt'
 			checkpoint_file = opt.dir+checkpoint_file
-			#find_shortest_path(None, idx, checkpoint_file, shortest_path_dict_train, epoch=i-1)
-
-			if i == 925: #+ opt.interval > opt.max_epoch:
-				print("find nn for epoch ", str(i))
-				find_nn(val_filename, None, idx, checkpoint_file, enames_train, shortest_path_dict_train, out_file, duplicate_file, n_top=5, epoch=i-1)
-				#find_shortest_path(None, idx, checkpoint_file, shortest_path_dict_train, epoch=i-1)
+			find_shortest_path(None, idx, checkpoint_file, shortest_path_dict_train, epoch=i-1)
+			#find_nn(val_filename, None, idx, checkpoint_file, enames_train, shortest_path_dict_train, out_file, duplicate_file, n_top=5, epoch=i-1)
+			#if i == 925: #+ opt.interval > opt.max_epoch:
+			#	print("find nn for epoch ", str(i))
+			#	find_nn(val_filename, None, idx, checkpoint_file, enames_train, shortest_path_dict_train, out_file, duplicate_file, n_top=5, epoch=i-1)
+			#	#find_shortest_path(None, idx, checkpoint_file, shortest_path_dict_train, epoch=i-1)
+	

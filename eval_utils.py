@@ -7,6 +7,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt 
 import argparse
 import model as model_class
+from scipy.stats import pearsonr
 
 def build_graph(dataset):
 	G = nx.Graph()
@@ -153,7 +154,7 @@ def find_nn(val_filename, model, idx, checkpoint_file, enames_train, shortest_pa
 				neighbor_str = all_val_strs[n_idx]
 				last_token_compared = output_last_token(neighbor_str, duplicate_file)
 				idx2 = enames_train[last_token_compared]
-				print(last_token, idx1, last_token_compared, idx2)
+				#print(last_token, idx1, last_token_compared, idx2)
 				if idx1 <= idx2:
 					true_dist = shortest_path_dict[idx1][idx2]
 				else:
@@ -194,22 +195,26 @@ def find_shortest_path(model, idx, checkpoint_file, shortest_path_dict, result_d
 			Ys.append(embed_dist)
 
 	print("plotting %d points" % len(Xs))
-	plt.scatter(Xs, Ys, s=1, c='b')
+	fig = plt.figure()
+	plt.scatter(Xs, Ys, alpha=0.1, s=1, c='b')
 	plt.xlabel('True distance')
 	plt.ylabel('Embedded distance')
-	plt.savefig(plt_name+'.png', format='png')
-	plt.close()
+	fig.savefig(plt_name+'.png', format='png')
+	plt.close(fig)
+	print(pearsonr(np.array(Xs), np.array(Ys)))
 
-	'''
-	if np.max(Xs) != 0 and np.max(Ys) != 0:
-		X_norms = np.array(Xs)/np.max(Xs)
-		Y_norms = np.array(Ys)/np.max(Ys)
-		plt.scatter(X_norms, Y_norms, s=1, c='b')
+	
+	if True:#np.max(Xs) != 0 and np.max(Ys) != 0:
+		fig = plt.figure()
+		X_norms = np.array(Xs)/10.0
+		Y_norms = np.array(Ys)/2.0
+		plt.scatter(X_norms, Y_norms, alpha=0.1, s=1, c='b')
 		plt.xlabel('True distance')
 		plt.ylabel('Embedded distance')
-		plt.savefig(plt_name+'_normalized.png', format='png')
-		plt.close()
-	'''
+		fig.savefig(plt_name+'_normalized.png', format='png')
+		plt.close(fig)
+		print(pearsonr(np.array(X_norms), np.array(Y_norms)))
+	
 
 if __name__ == '__main__':
 	#check_cycle('./package/functions_04182018_train_wo_duplicate.tsv')
