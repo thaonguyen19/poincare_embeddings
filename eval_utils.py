@@ -189,12 +189,14 @@ def find_shortest_path(model, idx, checkpoint_file, shortest_path_dict, result_d
 			Xs.append(true_dist)
 			Ys.append(embed_dist)
 
+	print("plotting %d points" % len(Xs))
 	plt.scatter(Xs, Ys, s=1, c='b')
 	plt.xlabel('True distance')
 	plt.ylabel('Embedded distance')
 	plt.savefig(plt_name+'.png', format='png')
 	plt.close()
 
+	'''
 	if np.max(Xs) != 0 and np.max(Ys) != 0:
 		X_norms = np.array(Xs)/np.max(Xs)
 		Y_norms = np.array(Ys)/np.max(Ys)
@@ -203,7 +205,7 @@ def find_shortest_path(model, idx, checkpoint_file, shortest_path_dict, result_d
 		plt.ylabel('Embedded distance')
 		plt.savefig(plt_name+'_normalized.png', format='png')
 		plt.close()
-	
+	'''
 
 if __name__ == '__main__':
 	#check_cycle('./package/functions_04182018_train_wo_duplicate.tsv')
