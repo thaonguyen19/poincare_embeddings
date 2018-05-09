@@ -151,10 +151,14 @@ def find_nn(val_filename, model, idx, checkpoint_file, enames_train, shortest_pa
 
 			for n_idx in all_neighbors[i, :]:
 				neighbor_str = all_val_strs[n_idx]
-				last_token = output_last_token(neighbor_str, duplicate_file)
-				idx2 = enames_train[last_token]
-				print(idx1, idx2)
-				neighbors.append((neighbor_str, dist_scores[i][n_idx], shortest_path_dict[idx1][idx2]))
+				last_token_compared = output_last_token(neighbor_str, duplicate_file)
+				idx2 = enames_train[last_token_compared]
+				print(last_token, idx1, last_token_compared, idx2)
+				if idx1 <= idx2:
+					true_dist = shortest_path_dict[idx1][idx2]
+				else:
+					true_dist = shortest_path_dict[idx2][idx1]
+				neighbors.append((neighbor_str, dist_scores[i][n_idx], true_dist))
 			neighbors = sorted(neighbors, key = lambda x: x[1])
 
 			fout.write(s + '\n')
