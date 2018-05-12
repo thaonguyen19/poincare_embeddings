@@ -33,7 +33,6 @@ if __name__ == '__main__':
 			enames_inv_val[enames_val[last_token]] = last_token
 
 	enames_val = dict(enames_val)
-	root_node_idx = enames_train['ROOT']
 	#print(len(enames_val.values()), min(enames_val.values()), max(enames_val.values()))
 	#print(len(enames_inv_val.keys()), min(enames_inv_val.keys()), max(enames_inv_val.keys()))
 	
@@ -73,6 +72,7 @@ if __name__ == '__main__':
 			checkpoint_file = opt.dir+checkpoint_file
 			#find_shortest_path(None, idx, checkpoint_file, shortest_path_dict_train, epoch=i-1)
 			if i + opt.interval > opt.max_epoch:
-				print("find nn and norm_check for epoch ", str(i))
-				norm_check(None, idx, checkpoint_file, root_node_idx, enames_inv_train, shortest_path_dict_train)
+				print("norm_check for epoch ", str(i))
+				norm_check(None, idx, checkpoint_file, enames_train, G_train)
+				print("find_nn for epoch ", str(i))
 				find_nn(val_filename, None, idx, checkpoint_file, enames_train, shortest_path_dict_train, out_file, duplicate_file, n_top=5, epoch=i-1)

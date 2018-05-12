@@ -214,18 +214,16 @@ def find_shortest_path(model, idx, checkpoint_file, shortest_path_dict, result_d
 	# 	plt.close(fig)
 		
 
-def norm_check(model, idx, checkpoint_file, root_node_idx, enames_inv_train, shortest_path_dict):
+def norm_check(model, idx, checkpoint_file, enames_train, G_train):
 	'''Output plot of norm versus distance from ROOT - a sanity check 
 	to make sure that norm is proportional to how deep we are down the package'''
 	if model is None:
 		model = load_model(idx, checkpoint_file)
 	lt = model.embedding()
 	Xs, Ys = [], []
-	for node_idx, _ in enames_inv_train.items():
-		if node_idx > root_node_idx:
-			dist_to_root = shortest_path_dict[root_node_idx][node_idx]
-		else:
-			dist_to_root = shortest_path_dict[node_idx][root_node_idx]
+	root_node_idx = enames_train['ROOT']
+	for _, node_idx in enames_train.items():
+		dist_to_root = nx.shortest_path_length(G_train, source=node_idx, target=root_node_idx)
 		norm = np.linalg.norm(lt[node_idx, :])
 		Xs.append(dist_to_root)
 		Ys.append(norm)
@@ -236,6 +234,7 @@ def norm_check(model, idx, checkpoint_file, root_node_idx, enames_inv_train, sho
 	plt.ylabel('Norm of embedding vector')
 	fig.savefig('Norm_vs_dist_ROOT.png', format='png')
 	plt.close(fig)
+	print(pearsonr(np.array(Xs), np.array(Ys)))
 
 
 if __name__ == '__main__':
