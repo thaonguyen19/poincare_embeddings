@@ -49,7 +49,6 @@ def ranking(types, model, distfn): #types here is adjacency matrix
 
 
 def control(queue, types, data, distfn, processes, model_name, opt):
-    out_file = 'nearest_neighbor_results.txt'
     min_rank = (np.Inf, -1)
     max_map = (0, -1)
     while True:
@@ -62,14 +61,12 @@ def control(queue, types, data, distfn, processes, model_name, opt):
         else:
             epoch, elapsed, loss, model = msg
         if model is not None:
-            # save model to fout
             th.save({
                 'model': model.state_dict(),
-                'objects': data.objects,
-                'enames': data.enames,
+                'dataset': opt.dset,
                 'distfn': distfn,
                 'dim': opt.dim
-            }, model_name+'_epoch_'+str(epoch)+'.pth') 
+            }, opt.dirout + model_name+'_epoch_'+str(epoch)+'.pth') 
 
             # compute embedding quality
             mrank, mAP = ranking(types, model, distfn)
@@ -100,6 +97,7 @@ if __name__ == '__main__':
     parser.add_argument('-dim', help='Embedding dimension', type=int)
     parser.add_argument('-dset', help='Dataset to embed', type=str)
     parser.add_argument('-fout', help='Filename where to write model results', type=str)
+    parser.add_argument('-dirout', help='Directory where to save model results', type=str)
     parser.add_argument('-valset', help='Validation Dataset (optional)', type=str, default='')
     parser.add_argument('-dupset', help='Duplicate Data', type=str, default='')
     parser.add_argument('-distfn', help='Distance function', type=str)
@@ -113,6 +111,7 @@ if __name__ == '__main__':
     parser.add_argument('-burnin', help='Duration of burn in', type=int, default=20)
     #parser.add_argument('-debug', help='Print debug output', action='store_true', default=False)
     opt = parser.parse_args()
+    opt.fout = opt.dirout + opt.fout
 
     th.set_default_tensor_type('torch.FloatTensor')
     # if opt.debug:
@@ -122,6 +121,8 @@ if __name__ == '__main__':
     # log = logging.getLogger('poincare-nips17')
     # logging.basicConfig(level=log_level, format='%(message)s', stream=sys.stdout)
     idx, objects, enames_train = slurp(opt.dset)
+    with open(opt.fout, 'w') as fout:
+        fout.write('Trained on dataset:' + opt.dset)
 
     # create adjacency list for evaluation
     adjacency = ddict(dict)

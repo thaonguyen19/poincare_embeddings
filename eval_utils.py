@@ -75,11 +75,11 @@ def check_cycle(dataset):
 						print("removing:", line.strip())
 
 
-def load_model(idx, checkpoint_file):
+def load_model(checkpoint_file):
 	assert(checkpoint_file is not None)
 	checkpoint = th.load(checkpoint_file)
-	objects = checkpoint['objects']
-	enames = checkpoint['enames']
+	tsv_file = checkpoint_file['dataset']
+	idx, objects, enames = slurp(tsv_file)
 	dim = checkpoint['dim']
 	distfn = checkpoint['distfn']
 	parser = argparse.ArgumentParser(description='Resume Poincare Embeddings')
@@ -119,7 +119,7 @@ def find_nn(val_filename, model, idx, checkpoint_file, enames_train, shortest_pa
 
 	print("VAL SET SIZE:", len(all_val_strs))
 	if model is None:
-		model = load_model(idx, checkpoint_file)
+		model = load_model(checkpoint_file)
 	lt = model.embedding()
 	n_val = len(all_val_strs)
 	dist_scores = np.zeros((n_val, n_val))
@@ -182,7 +182,7 @@ def find_shortest_path(model, idx, checkpoint_file, shortest_path_dict, result_d
 	Ys = []
 	#n_nodes = len(enames_inv.items())
 	if model is None:
-		model = load_model(idx, checkpoint_file)
+		model = load_model(checkpoint_file)
 	lt = model.embedding()
 
 	for idx1 in shortest_path_dict.keys():
@@ -218,7 +218,7 @@ def norm_check(model, idx, checkpoint_file, enames_train, G_train):
 	'''Output plot of norm versus distance from ROOT - a sanity check 
 	to make sure that norm is proportional to how deep we are down the package'''
 	if model is None:
-		model = load_model(idx, checkpoint_file)
+		model = load_model(checkpoint_file)
 	lt = model.embedding()
 	Xs, Ys = [], []
 	root_node_idx = enames_train['ROOT']

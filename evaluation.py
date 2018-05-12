@@ -21,9 +21,7 @@ if __name__ == '__main__':
 	opt.max_epoch = 75
 	opt.interval = 25
 	idx, _, _ = slurp(train_dset)
-	#_, enames_inv_val, enames_val = build_graph(val_filename + '_train.tsv')
 	G_train, enames_inv_train, enames_train = build_graph(train_dset)
-	print(enames_inv_train[34801])
 	ecount = count()
 	enames_val = defaultdict(ecount.__next__)
 	enames_inv_val = dict()

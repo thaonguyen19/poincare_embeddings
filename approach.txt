@@ -31,6 +31,8 @@ first create a shortest_path_dict to store true distance from each node to all t
 iterate through each key in shortest_path_dict: for all the other nodes larger than the key (i.e. loop through value set), use the node indices to compute the embedding distance.
 Obtain scatter plot from the list of embedding distances and true distances.
 
+> Also find Pearson correlation - but this is only indicator for linear relationship though
+
 - Find nearest neighbor: 
 Computing similarity between package import statements mainly based on last token embeddings: compute a dist_scores matrix of size (n_val, n_val) to store the embedding distance between each line in the val set with all others. 
 Use np.argpartition to find 5 indices (based on val set) that give yield 5 smallest distances in each row
