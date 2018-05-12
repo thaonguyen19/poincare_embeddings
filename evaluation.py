@@ -18,7 +18,7 @@ if __name__ == '__main__':
 	#parser.add_argument('-interval', help='Interval to evaluate', type=int)
 	opt = parser.parse_args()
 	opt.dir = '/lfs/hyperion/0/thaonguyen/poincare_embeddings/'
-	opt.max_epoch = 375
+	opt.max_epoch = 75
 	opt.interval = 25
 	idx, _, _ = slurp(train_dset)
 	#_, enames_inv_val, enames_val = build_graph(val_filename + '_train.tsv')
@@ -71,9 +71,7 @@ if __name__ == '__main__':
 			out_file = checkpoint_file[:-4] + '_nn.txt'
 			checkpoint_file = opt.dir+checkpoint_file
 			find_shortest_path(None, idx, checkpoint_file, shortest_path_dict_train, epoch=i-1)
-			#find_nn(val_filename, None, idx, checkpoint_file, enames_train, shortest_path_dict_train, out_file, duplicate_file, n_top=5, epoch=i-1)
-			#if i == 925: #+ opt.interval > opt.max_epoch:
-			#	print("find nn for epoch ", str(i))
-			#	find_nn(val_filename, None, idx, checkpoint_file, enames_train, shortest_path_dict_train, out_file, duplicate_file, n_top=5, epoch=i-1)
-			#	#find_shortest_path(None, idx, checkpoint_file, shortest_path_dict_train, epoch=i-1)
-	
+			if i + opt.interval > opt.max_epoch:
+				print("find nn and norm_check for epoch ", str(i))
+				norm_check(None, checkpoint_file, enames_train_inv, shortest_path_dict_train)
+				find_nn(val_filename, None, idx, checkpoint_file, enames_train, shortest_path_dict_train, out_file, duplicate_file, n_top=5, epoch=i-1)

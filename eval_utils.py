@@ -203,18 +203,39 @@ def find_shortest_path(model, idx, checkpoint_file, shortest_path_dict, result_d
 	plt.close(fig)
 	print(pearsonr(np.array(Xs), np.array(Ys)))
 
-	
-	if True:#np.max(Xs) != 0 and np.max(Ys) != 0:
-		fig = plt.figure()
-		X_norms = np.array(Xs)/10.0
-		Y_norms = np.array(Ys)/2.0
-		plt.scatter(X_norms, Y_norms, alpha=0.1, s=1, c='b')
-		plt.xlabel('True distance')
-		plt.ylabel('Embedded distance')
-		fig.savefig(plt_name+'_normalized.png', format='png')
-		plt.close(fig)
-		print(pearsonr(np.array(X_norms), np.array(Y_norms)))
-	
+	# if np.max(Xs) != 0 and np.max(Ys) != 0:
+	# 	fig = plt.figure()
+	# 	X_norms = np.array(Xs)/10.0
+	# 	Y_norms = np.array(Ys)/2.0
+	# 	plt.scatter(X_norms, Y_norms, alpha=0.1, s=1, c='b')
+	# 	plt.xlabel('True distance')
+	# 	plt.ylabel('Embedded distance')
+	# 	fig.savefig(plt_name+'_normalized.png', format='png')
+	# 	plt.close(fig)
+		
+
+def norm_check(model, checkpoint_file, enames_train_inv, shortest_path_dict):
+	'''Output plot of norm versus distance from ROOT - a sanity check 
+	to make sure that norm is proportional to how deep we are down the package'''
+	if model is None:
+		model = load_model(idx, checkpoint_file)
+	lt = model.embedding()
+	root_node_idx = enames_train_inv['ROOT']
+	Xs, Ys = [], []
+	for idx, _ in enames_train.items():
+		if idx > root_node_idx:
+			dist_to_root = shortest_path_dict[root_node_idx][idx]
+			norm = np.linalg.norm(lt[idx, :])
+			Xs.append(dist_to_root)
+			Ys.append(norm)
+
+	fig = plt.figure()
+	plt.scatter(X_norms, Y_norms, alpha=0.1, s=1, c='b')
+	plt.xlabel('Distance to ROOT')
+	plt.ylabel('Norm of embedding vector')
+	fig.savefig('Norm_vs_dist_ROOT.png', format='png')
+	plt.close(fig)
+
 
 if __name__ == '__main__':
 	#check_cycle('./package/functions_04182018_train_wo_duplicate.tsv')
