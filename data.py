@@ -129,7 +129,8 @@ def get_duplicate(duplicate_file_name):
     return result
 
 
-def process_duplicate(duplicate_set, file_read, file_write, sep='.'):
+def process_duplicate(duplicate_set, file_read, file_write, clique_type, sep='.'):
+    '''clique_type options: no_clique, full_clique, basic_clique'''
     w = int(DEFAULT_WEIGHT/1)
     duplicate_dict = ddict(set)
 
@@ -143,16 +144,22 @@ def process_duplicate(duplicate_set, file_read, file_write, sep='.'):
                     #if len(tokens) < 2:
                     #    continue
                     renamed_token = tokens[-1] + '_' + tokens[-2]
-                    duplicate_dict[tokens[-1]].add(renamed_token)
                     fout.write(renamed_token + '\t' + tokens[-2] + '\n')
+                    if clique_type == 'full_clique':
+                        duplicate_dict[tokens[-1]].add(renamed_token)
+                    elif clique_type == 'basic_clique':
+                        duplicate_dict[(tokens[0], tokens[-1])].add(renamed_token)
+                    
 
-    with open(file_write, 'a') as fout:
-        for token, renamed_token_list in duplicate_dict.items():
-            for pair in itertools.combinations(renamed_token_list, 2):
-                fout.write(pair[0] + '\t' + pair[1] + '\t' + str(w) + '\n')
-                if pair[0] != pair[1]:
-                    fout.write(pair[1] + '\t' + pair[0] + '\t' + str(w) + '\n')
-
+    if clique_type == 'full_clique' or clique_type == 'basic_clique':
+        with open(file_write, 'a') as fout:
+            for token, renamed_token_list in duplicate_dict.items():
+                print(token, len(renamed_token_list))
+                for pair in itertools.combinations(renamed_token_list, 2):
+                    fout.write(pair[0] + '\t' + pair[1] + '\t' + str(w) + '\n')
+                    if pair[0] != pair[1]:
+                        fout.write(pair[1] + '\t' + pair[0] + '\t' + str(w) + '\n')
+        
 
 def parse_line(line, length=2, sep='\t'):
     #each line is either (head, tail) or (head, tail, weight). Return tuple of (head, tail, weight)
@@ -206,10 +213,10 @@ def slurp(fin, fparse=parse_line, symmetrize=False):
 
 if __name__ == '__main__':
     ### use command line sort <init file> -o <sorted file> to obtain a sorted file
-    main_file = './package/functions_04182018_sorted' 
-    debug_file = generate_debug_set(main_file)
-    for package_file_sorted in [main_file, debug_file]:
+    main_file = './package_basic_clique/functions_04182018_sorted' 
+    #debug_file = generate_debug_set(main_file)
+    for package_file_sorted in [main_file]:#, debug_file]:
         sorted_val_file = generate_train_val2(package_file_sorted) 
         duplicate_set, duplicate_file_name, tsv_package_file = generate_pairs(package_file_sorted, 'train')
         create_file_wo_duplicate(tsv_package_file)
-        process_duplicate(duplicate_set, package_file_sorted, tsv_package_file)
+        process_duplicate(duplicate_set, package_file_sorted, tsv_package_file, clique_type='no_clique')
