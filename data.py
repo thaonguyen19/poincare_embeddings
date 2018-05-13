@@ -11,6 +11,7 @@ import numpy as np
 import torch as th
 import itertools
 import random
+import sys
 
 DEFAULT_WEIGHT = 1
 
@@ -133,6 +134,7 @@ def process_duplicate(duplicate_set, file_read, file_write, clique_type, sep='.'
     '''clique_type options: no_clique, full_clique, basic_clique'''
     w = int(DEFAULT_WEIGHT/1)
     duplicate_dict = ddict(set)
+    count_renamed_tokens = ddict(int)
 
     with open(file_write, 'a') as fout:
         with open(file_read, 'r') as fin:
@@ -141,9 +143,8 @@ def process_duplicate(duplicate_set, file_read, file_write, clique_type, sep='.'
                 if tokens[-1] not in duplicate_set:
                     fout.write(tokens[-1] + '\t' + tokens[-2] + '\n')
                 else:
-                    #if len(tokens) < 2:
-                    #    continue
-                    renamed_token = tokens[-1] + '_' + tokens[-2]
+                    renamed_token = tokens[-1] + '_' + line.strip()[:(-len(tokens[-1])-1)]
+                    count_renamed_tokens[renamed_token] += 1
                     fout.write(renamed_token + '\t' + tokens[-2] + '\n')
                     if clique_type == 'full_clique':
                         duplicate_dict[tokens[-1]].add(renamed_token)
@@ -159,7 +160,12 @@ def process_duplicate(duplicate_set, file_read, file_write, clique_type, sep='.'
                     fout.write(pair[0] + '\t' + pair[1] + '\t' + str(w) + '\n')
                     if pair[0] != pair[1]:
                         fout.write(pair[1] + '\t' + pair[0] + '\t' + str(w) + '\n')
-        
+    
+    print("Checking repetition even in renamed tokens:")
+    for k, v in count_renamed_tokens.items():
+        if v >= 2:
+            print(k, v)
+
 
 def parse_line(line, length=2, sep='\t'):
     #each line is either (head, tail) or (head, tail, weight). Return tuple of (head, tail, weight)
@@ -213,10 +219,12 @@ def slurp(fin, fparse=parse_line, symmetrize=False):
 
 if __name__ == '__main__':
     ### use command line sort <init file> -o <sorted file> to obtain a sorted file
-    main_file = './package_basic_clique/functions_04182018_sorted' 
+    clique_type = sys.argv[1]
+    print("Clique type:", clique_type)
+    main_file = ('./package_%s/functions_04182018_sorted' % clique_type)
     #debug_file = generate_debug_set(main_file)
     for package_file_sorted in [main_file]:#, debug_file]:
-        sorted_val_file = generate_train_val2(package_file_sorted) 
+        #sorted_val_file = generate_train_val2(package_file_sorted) 
         duplicate_set, duplicate_file_name, tsv_package_file = generate_pairs(package_file_sorted, 'train')
         create_file_wo_duplicate(tsv_package_file)
-        process_duplicate(duplicate_set, package_file_sorted, tsv_package_file, clique_type='no_clique')
+        process_duplicate(duplicate_set, package_file_sorted, tsv_package_file, clique_type=clique_type)
