@@ -9,8 +9,11 @@ import argparse
 import model as model_class
 from scipy.stats import pearsonr
 
-def build_graph(dataset):
-	G = nx.Graph()
+def build_graph(dataset, directed=False):
+	if directed:
+		G = nx.DiGraph()
+	else:
+		G = nx.Graph()
 	idx, objects, enames = slurp(dataset)
 	enames_inv = dict()
 	for k, v in enames.items():
@@ -40,40 +43,36 @@ def check_all_connected(dataset):
 def check_cycle(dataset):
 	print("checking cycle...")
 	assert('wo_clique' in dataset or 'wo_duplicate' in dataset) #file where 'undirected' edges between duplicated package names have not been added
-	G, enames_inv, _ = build_graph(dataset)
+	G, enames_inv, enames = build_graph(dataset, directed=True)
 	
 	new_dataset = dataset[:-4] + '_no_cycle.tsv'
 	cycle_nodes = set()
-	cycle_node_names = []
+	cycle_edges = []
 
 	while True:
 		try:
 			cycle = nx.find_cycle(G)
+			nodes_idx = [e[0] for e in cycle]
+			node_names = [enames_inv[i] for i in nodes_idx]
+			print(node_names)
 			for e in cycle:
-				cycle_nodes.add(e[0])
+				cycle_edges.add(e)
 				G.remove_edge(*e)
 
 		except nx.NetworkXNoCycle as e:
 			print(e)
 			break	
 
-	for i in cycle_nodes:
-		cycle_node_names.append(enames_inv[i])
-		print(cycle_node_names)
-
-	if len(cycle_nodes) != 0:
-		with open(new_dataset, 'w') as fout:
-			with open(dataset, 'r') as fin:
-				for line in fin:
-					selected = True
-					for name in cycle_node_names:
-						if name in line:
-							selected = False
-							break
-					if selected:
-						fout.write(line)
-					else:
-						print("removing:", line.strip())
+	#if len(cycle_edges) != 0:
+	with open(new_dataset, 'w') as fout:
+		with open(dataset, 'r') as fin:
+			for line in fin:
+				values = line.strip().split('\t')
+				tup = (enames[values[0]], enames[values[1]])
+				if tup not in cycle_edges:
+					fout.write(line)
+				else:
+					print("removing:", line.strip())
 
 
 def load_model(checkpoint_file):
