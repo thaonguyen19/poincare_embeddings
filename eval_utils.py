@@ -25,6 +25,7 @@ def build_graph(dataset):
 
 
 def check_all_connected(dataset):
+	print('checking all are connected...')
 	G, enames_inv, enames = build_graph(dataset)
 	n_nodes = len(G.nodes())
 	for i in range(n_nodes):
@@ -37,9 +38,9 @@ def check_all_connected(dataset):
 
 
 def check_cycle(dataset):
-	assert('wo_duplicate' in dataset) #file where 'undirected' edges between duplicated package names have not been added
+	print("checking cycle...")
+	assert('wo_clique' in dataset or 'wo_duplicate' in dataset) #file where 'undirected' edges between duplicated package names have not been added
 	G, enames_inv, _ = build_graph(dataset)
-	print("finish building graph")
 	
 	new_dataset = dataset[:-4] + '_no_cycle.tsv'
 	cycle_nodes = set()
@@ -238,5 +239,5 @@ def norm_check(model, idx, checkpoint_file, enames_train, G_train):
 
 
 if __name__ == '__main__':
-	#check_cycle('./package/functions_04182018_train_wo_duplicate.tsv')
-	check_all_connected('./package/functions_04182018_train.tsv')
+	check_cycle('./package/functions_04182018_train_wo_duplicate.tsv')
+	#check_all_connected('./package_wo_clique/functions_04182018_train.tsv')
