@@ -15,7 +15,17 @@ import sys
 
 DEFAULT_WEIGHT = 1
 
-def generate_debug_set(package_file_sorted, n_test=300):
+
+def find_main_packages(package_file_sorted):
+    results = set()
+    with open(package_file_sorted, 'r') as f:
+        for line in f:
+            tokens = line.strip().split('.')
+            results.add(tokens[0])
+    return results
+
+
+def generate_debug_set(package_file_sorted, n_test=100):
     debug_file_name = package_file_sorted[:-6] + 'debug_sorted'
     with open(package_file_sorted, 'r') as f:
         all_lines = f.readlines()
@@ -222,9 +232,21 @@ if __name__ == '__main__':
     clique_type = sys.argv[1]
     print("Clique type:", clique_type)
     main_file = ('./package_%s/functions_04182018_sorted' % clique_type)
-    #debug_file = generate_debug_set(main_file)
-    for package_file_sorted in [main_file]:#, debug_file]:
-        #sorted_val_file = generate_train_val2(package_file_sorted) 
-        duplicate_set, duplicate_file_name, tsv_package_file = generate_pairs(package_file_sorted, 'train')
-        create_file_wo_duplicate(tsv_package_file)
-        process_duplicate(duplicate_set, package_file_sorted, tsv_package_file, clique_type=clique_type)
+    main_packages = list(find_main_packages(main_file))
+    print(main_packages)
+    with open(main_file, 'r') as f:
+        all_lines = f.readlines()
+    for i in range(len(main_packages)):
+        for j in range(i+1, len(main_packages)):
+            for line in all_lines:
+                all_tokens = line.strip().split('.')[:-1]
+                if main_packages[i] in all_tokens and main_packages[j] in all_tokens:
+                    print(main_packages[i], main_packages[j], line)
+                    break
+
+    # #debug_file = generate_debug_set(main_file)
+    # for package_file_sorted in [main_file]:#, debug_file]:
+    #     #sorted_val_file = generate_train_val2(package_file_sorted) 
+    #     duplicate_set, duplicate_file_name, tsv_package_file = generate_pairs(package_file_sorted, 'train')
+    #     #create_file_wo_duplicate(tsv_package_file)
+    #     process_duplicate(duplicate_set, package_file_sorted, tsv_package_file, clique_type=clique_type)

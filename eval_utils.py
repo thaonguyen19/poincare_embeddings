@@ -56,7 +56,7 @@ def check_cycle(dataset):
 			node_names = [enames_inv[i] for i in nodes_idx]
 			print(node_names)
 			for e in cycle:
-				cycle_edges.add(e)
+				cycle_edges.append(e)
 				G.remove_edge(*e)
 
 		except nx.NetworkXNoCycle as e:
