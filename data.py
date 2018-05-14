@@ -36,6 +36,7 @@ def generate_debug_set(package_file_sorted, n_test=100):
                 fout.write(l)
     return debug_file_name
 
+
 def generate_train_val2(package_file_sorted, n_val=1000, sep='.'):
     assert('sorted' in package_file_sorted)
     sorted_val_file = package_file_sorted[:-6]+'val'
@@ -110,7 +111,6 @@ def generate_pairs(package_file, dataset, sep='.'):
                 package_names = ['ROOT'] + package_names  
                 for i in range(len(package_names)-2):
                     high, low = package_names[i], package_names[i+1]
-                    #fout.write(low + '\t' + high + '\n') #more specific package comes first
                     mapping[high].add(low)
                 
                 #process the last pair separately to check for duplicates
@@ -165,8 +165,7 @@ def process_duplicate(duplicate_set, file_read, file_write, clique_type, sep='.'
                     if clique_type == 'full_clique':
                         duplicate_dict[tokens[-1]].add(renamed_token)
                     elif clique_type == 'basic_clique':
-                        duplicate_dict[tokens[-1]].add(renamed_token)
-                    
+                        duplicate_dict[tokens[-1]].add(renamed_token)  
 
     if clique_type == 'full_clique' or clique_type == 'basic_clique':
         with open(file_write, 'a') as fout:

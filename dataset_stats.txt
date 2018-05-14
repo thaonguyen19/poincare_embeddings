@@ -1,1 +1,13 @@
 Main packages: ['shutil', 'http', 'pickle', 'collections', 'bz2', 'subprocess', 'array', 'tempfile', 'glob', 'inspect', 're', 'py', 'uuid', 'numpy', 'copy', '_pytest', 'os', 'functools', 'minpack', 'gzip', 'genericpath', 'matplotlib', 'sympy', 'quadpack', 'abc', 'decimal', 'datetime', 'mtrand', 'tokenize', '_pickle', 'pkgutil', 'unittest', 'contextlib', 'numbers', 'sklearn', 'multiprocessing', 'jinja2', 'itertools', '_io', 'pandas', 'scipy', 'threading', 'pytz', 'dateutil', 'pathlib', 'urllib', 'mmap', 'nose', 'random', 'posixpath', 'ctypes', 'distutils', 'builtins', 'textwrap']
+
+- wordnet/noun_closure.tsv
+743086 lines
+slurp: objects=82115, edges=743086
+
+- package_renamed_wo_clique/functions_04182018_train.tsv
+35551 lines
+slurp: objects=35168, edges=35492
+
+- package_renamed_basic_clique/functions_04182018_train.tsv
+895357 lines
+slurp: objects=35168, edges=895298
