@@ -104,8 +104,9 @@ def generate_pairs(package_file, dataset, sep='.'):
         with open(package_file, 'r') as f:
             for line in f:
                 package_names = line.strip().split(sep)
-                if len(package_names) < 2:
-                    continue
+                first = package_names[0]
+                for i in range(len(package_names)):
+                    package_names[i] = package_names[i] + '-' + first
                 package_names = ['ROOT'] + package_names  
                 for i in range(len(package_names)-2):
                     high, low = package_names[i], package_names[i+1]
@@ -141,7 +142,7 @@ def get_duplicate(duplicate_file_name):
 
 
 def process_duplicate(duplicate_set, file_read, file_write, clique_type, sep='.'):
-    '''clique_type options: no_clique, full_clique, basic_clique'''
+    '''clique_type options: wo_clique, full_clique, basic_clique'''
     w = int(DEFAULT_WEIGHT/1)
     duplicate_dict = ddict(set)
     count_renamed_tokens = ddict(int)
@@ -150,16 +151,21 @@ def process_duplicate(duplicate_set, file_read, file_write, clique_type, sep='.'
         with open(file_read, 'r') as fin:
             for line in fin:
                 tokens = line.strip().split(sep)
+                first = tokens[0]
+                length = len(tokens[-1])
+                for i in range(len(tokens)):
+                    tokens[i] = tokens[i] + '-' + first
+
                 if tokens[-1] not in duplicate_set:
                     fout.write(tokens[-1] + '\t' + tokens[-2] + '\n')
                 else:
-                    renamed_token = tokens[-1] + '_' + line.strip()[:(-len(tokens[-1])-1)]
+                    renamed_token = tokens[-1] + '_' + line.strip()[:(-length-1)]
                     count_renamed_tokens[renamed_token] += 1
                     fout.write(renamed_token + '\t' + tokens[-2] + '\n')
                     if clique_type == 'full_clique':
                         duplicate_dict[tokens[-1]].add(renamed_token)
                     elif clique_type == 'basic_clique':
-                        duplicate_dict[(tokens[0], tokens[-1])].add(renamed_token)
+                        duplicate_dict[tokens[-1]].add(renamed_token)
                     
 
     if clique_type == 'full_clique' or clique_type == 'basic_clique':
@@ -209,6 +215,7 @@ def intmap_to_list(d):
 
 
 def slurp(fin, fparse=parse_line, symmetrize=False):
+    print("slurp for file ", fin)
     ecount = count()
     enames = ddict(ecount.__next__)
 
@@ -231,22 +238,21 @@ if __name__ == '__main__':
     ### use command line sort <init file> -o <sorted file> to obtain a sorted file
     clique_type = sys.argv[1]
     print("Clique type:", clique_type)
-    main_file = ('./package_%s/functions_04182018_sorted' % clique_type)
-    main_packages = list(find_main_packages(main_file))
-    print(main_packages)
-    with open(main_file, 'r') as f:
-        all_lines = f.readlines()
-    for i in range(len(main_packages)):
-        for j in range(i+1, len(main_packages)):
-            for line in all_lines:
-                all_tokens = line.strip().split('.')[:-1]
-                if main_packages[i] in all_tokens and main_packages[j] in all_tokens:
-                    print(main_packages[i], main_packages[j], line)
-                    break
+    main_file = ('./package_renamed_%s/functions_04182018_sorted' % clique_type)
+    # main_packages = list(find_main_packages(main_file))
+    # print(main_packages)
+    # with open(main_file, 'r') as f:
+    #     all_lines = f.readlines()
+    # for i in range(len(main_packages)):
+    #     for j in range(i+1, len(main_packages)):
+    #         for line in all_lines:
+    #             all_tokens = line.strip().split('.')[:-1]
+    #             if main_packages[i] in all_tokens and main_packages[j] in all_tokens:
+    #                 print(main_packages[i], main_packages[j], line)
+    #                 break
 
-    # #debug_file = generate_debug_set(main_file)
-    # for package_file_sorted in [main_file]:#, debug_file]:
-    #     #sorted_val_file = generate_train_val2(package_file_sorted) 
-    #     duplicate_set, duplicate_file_name, tsv_package_file = generate_pairs(package_file_sorted, 'train')
-    #     #create_file_wo_duplicate(tsv_package_file)
-    #     process_duplicate(duplicate_set, package_file_sorted, tsv_package_file, clique_type=clique_type)
+    #debug_file = generate_debug_set(main_file)
+    for package_file_sorted in [main_file]:#, debug_file]:
+        #sorted_val_file = generate_train_val2(package_file_sorted) 
+        duplicate_set, duplicate_file_name, tsv_package_file = generate_pairs(package_file_sorted, 'train')
+        process_duplicate(duplicate_set, package_file_sorted, tsv_package_file, clique_type=clique_type)
