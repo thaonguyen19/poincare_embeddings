@@ -98,8 +98,6 @@ if __name__ == '__main__':
     parser.add_argument('-dset', help='Dataset to embed', type=str)
     parser.add_argument('-fout', help='Filename where to write model results', type=str)
     parser.add_argument('-dirout', help='Directory where to save model results', type=str)
-    parser.add_argument('-valset', help='Validation Dataset (optional)', type=str, default='')
-    parser.add_argument('-dupset', help='Duplicate Data', type=str, default='')
     parser.add_argument('-distfn', help='Distance function', type=str)
     parser.add_argument('-lr', help='Learning rate', type=float)
     parser.add_argument('-epochs', help='Number of epochs', type=int, default=200)
