@@ -75,7 +75,7 @@ def check_cycle(dataset):
 def load_model(checkpoint_file):
 	assert(checkpoint_file is not None)
 	checkpoint = th.load(checkpoint_file)
-	tsv_file = checkpoint_file['dataset']
+	tsv_file = checkpoint['dataset']
 	idx, objects, enames = slurp(tsv_file)
 	dim = checkpoint['dim']
 	distfn = checkpoint['distfn']
@@ -97,11 +97,14 @@ def output_last_token(s, duplicate_file):
 		for line in f:
 			all_duplicate_strs.append(line.strip())
 
-	tokens = s.split(sep='.')
-	token = tokens[-1]
-	if token in all_duplicate_strs:
-		token = token + '_' + tokens[-2]
-	return token
+	tokens = s.strip().split(sep='.')
+	first = tokens[0]
+	last = tokens[-1]
+	length = len(last)
+	last = last + '-' + first
+	if last in all_duplicate_strs:
+		last = last + '_' + s.strip()[:(-length-1)]
+	return last
 
 
 def find_nn(val_filename, model, idx, checkpoint_file, enames_train, shortest_path_dict, out_file, duplicate_file, n_top=5, epoch=None): #train_dset
@@ -235,5 +238,5 @@ def norm_check(model, idx, checkpoint_file, enames_train, G_train):
 
 
 if __name__ == '__main__':
-	check_cycle('./package_renamed_wo_clique/functions_04182018_train.tsv')
-	#check_all_connected('./package_wo_clique/functions_04182018_train.tsv')
+	#check_cycle('./package_renamed_wo_clique/functions_04182018_train.tsv')
+	check_all_connected('./package_renamed_basic_clique/functions_04182018_train.tsv')

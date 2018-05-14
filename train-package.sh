@@ -22,9 +22,8 @@ python3 embed.py \
        -burnin 20 \
        -nproc "${NTHREADS}" \
        -distfn poincare \
-       -dset package/functions_04182018_train.tsv \
-       -valset package/functions_04182018_val \
-       -dupset package/functions_04182018_duplicate_train \
+       -dset package_renamed_wo_clique/functions_04182018_train.tsv \
        -fout train_results_latest.txt \
-       -batchsize 64 \
+       -dirout trained_model_0513/ \
+       -batchsize 50 \
        -eval_each 25 \

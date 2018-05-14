@@ -24,5 +24,6 @@ python3 embed.py \
        -distfn poincare \
        -dset wordnet/noun_closure.tsv \
        -fout nouns_results.txt \
+       -dirout ./ \
        -batchsize 50 \
        -eval_each 100

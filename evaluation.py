@@ -6,9 +6,9 @@ from collections import defaultdict
 from itertools import count
 import pickle
 
-val_filename = './package/functions_04182018_val'
-duplicate_file = './package/functions_04182018_duplicate_train'
-train_dset = './package/functions_04182018_train.tsv'
+val_filename = './package_renamed_wo_clique/functions_04182018_val'
+duplicate_file = './package_renamed_wo_clique/functions_04182018_duplicate_train'
+train_dset = './package_renamed_wo_clique/functions_04182018_train.tsv'
 
 
 if __name__ == '__main__':
@@ -17,8 +17,8 @@ if __name__ == '__main__':
 	#parser.add_argument('-max_epoch', help='Maximum epoch', type=int)
 	#parser.add_argument('-interval', help='Interval to evaluate', type=int)
 	opt = parser.parse_args()
-	opt.dir = '/lfs/hyperion/0/thaonguyen/poincare_embeddings/'
-	opt.max_epoch = 75
+	opt.dir = '/lfs/hyperion/0/thaonguyen/poincare_embeddings/trained_model_0513/'
+	opt.max_epoch = 575
 	opt.interval = 25
 	idx, _, _ = slurp(train_dset)
 	G_train, enames_inv_train, enames_train = build_graph(train_dset)
@@ -28,7 +28,11 @@ if __name__ == '__main__':
 	with open(val_filename, 'r') as fval:
 		for line in fval:
 			last_token = output_last_token(line.strip(), duplicate_file)
-			enames_inv_val[enames_val[last_token]] = last_token
+			if last_token not in enames_train:
+				print("NOT FOUND IN TRAIN:", last_token)
+				continue
+			else:
+				enames_inv_val[enames_val[last_token]] = last_token
 
 	enames_val = dict(enames_val)
 	#print(len(enames_val.values()), min(enames_val.values()), max(enames_val.values()))
@@ -44,7 +48,7 @@ if __name__ == '__main__':
 		for i in range(len(enames_val)):
 			name_i = enames_inv_val[i]
 			train_idx_i = enames_train[name_i]
-			print(train_idx_i, name_i)
+			#print(train_idx_i, name_i)
 			for j in range(i+1, len(enames_val)):
 				name_j = enames_inv_val[j]
 				train_idx_j = enames_train[name_j]

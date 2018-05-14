@@ -98,8 +98,6 @@ if __name__ == '__main__':
     parser.add_argument('-dset', help='Dataset to embed', type=str)
     parser.add_argument('-fout', help='Filename where to write model results', type=str)
     parser.add_argument('-dirout', help='Directory where to save model results', type=str)
-    parser.add_argument('-valset', help='Validation Dataset (optional)', type=str, default='')
-    parser.add_argument('-dupset', help='Duplicate Data', type=str, default='')
     parser.add_argument('-distfn', help='Distance function', type=str)
     parser.add_argument('-lr', help='Learning rate', type=float)
     parser.add_argument('-epochs', help='Number of epochs', type=int, default=200)
@@ -122,7 +120,7 @@ if __name__ == '__main__':
     # logging.basicConfig(level=log_level, format='%(message)s', stream=sys.stdout)
     idx, objects, enames_train = slurp(opt.dset)
     with open(opt.fout, 'w') as fout:
-        fout.write('Trained on dataset:' + opt.dset)
+        fout.write('Trained on dataset:' + opt.dset + '\n')
 
     # create adjacency list for evaluation
     adjacency = ddict(dict)
