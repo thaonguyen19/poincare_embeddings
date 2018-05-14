@@ -42,12 +42,10 @@ def check_all_connected(dataset):
 
 def check_cycle(dataset):
 	print("checking cycle...")
-	assert('wo_clique' in dataset or 'wo_duplicate' in dataset) #file where 'undirected' edges between duplicated package names have not been added
-	G, enames_inv, enames = build_graph(dataset, directed=True)
-	
+	assert('wo_cycle' in dataset or 'wo_clique' in dataset or 'wo_duplicate' in dataset) #file where 'undirected' edges between duplicated package names have not been added
+	G, enames_inv, enames = build_graph(dataset, directed=True)	
 	new_dataset = dataset[:-4] + '_no_cycle.tsv'
 	cycle_nodes = set()
-	cycle_edges = []
 
 	while True:
 		try:
@@ -56,7 +54,7 @@ def check_cycle(dataset):
 			node_names = [enames_inv[i] for i in nodes_idx]
 			print(node_names)
 			for e in cycle:
-				cycle_edges.append(e)
+				cycle_nodes.add(enames_inv[e[0]])
 				G.remove_edge(*e)
 
 		except nx.NetworkXNoCycle as e:
@@ -68,11 +66,10 @@ def check_cycle(dataset):
 		with open(dataset, 'r') as fin:
 			for line in fin:
 				values = line.strip().split('\t')
-				tup = (enames[values[0]], enames[values[1]])
-				if tup not in cycle_edges:
-					fout.write(line)
-				else:
+				if values[0] in cycle_nodes or values[1] in cycle_nodes:
 					print("removing:", line.strip())
+				else:	
+					fout.write(line)
 
 
 def load_model(checkpoint_file):
@@ -238,5 +235,5 @@ def norm_check(model, idx, checkpoint_file, enames_train, G_train):
 
 
 if __name__ == '__main__':
-	check_cycle('./package/functions_04182018_train_wo_duplicate.tsv')
+	check_cycle('./package_renamed_wo_clique/functions_04182018_train.tsv')
 	#check_all_connected('./package_wo_clique/functions_04182018_train.tsv')
