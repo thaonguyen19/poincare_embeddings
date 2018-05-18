@@ -82,7 +82,5 @@ if __name__ == '__main__':
 			checkpoint_file = opt.dir+checkpoint_file
 			find_shortest_path(None, checkpoint_file, shortest_path_dict, epoch=i-1)
 			if i + opt.interval > opt.max_epoch: #last epoch
-				print("norm_check for epoch ", str(i))
-				norm_check(None, checkpoint_file, all_val_data, epoch=i-1)
-				print("find_nn for epoch ", str(i))
+				norm_check(None, checkpoint_file, opt.dir, all_val_data, epoch=i-1)
 				#find_nn(val_filename, None, checkpoint_file, enames_train, shortest_path_dict_train, out_file, duplicate_file, n_top=5, epoch=i-1)
