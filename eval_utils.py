@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import argparse
 import model as model_class
 from scipy.stats import pearsonr
+from argparse import Namespace
 
 def build_graph(dataset, directed=False):
 	if directed:
@@ -79,14 +80,12 @@ def load_model(checkpoint_file):
 	idx, objects, enames = slurp(tsv_file)
 	dim = checkpoint['dim']
 	distfn = checkpoint['distfn']
-	parser = argparse.ArgumentParser(description='Resume Poincare Embeddings')
-	opt = parser.parse_args()
-	opt.dim = dim
-	opt.distfn = distfn
-	opt.negs = 50 #doesn't matter
-	opt.dset = 'test.tsv' #doesn't matter
-	#idx, objects, enames = slurp(opt.dset)
-	model, data, model_name, _ = model_class.SNGraphDataset.initialize(distfn, opt, idx, objects, enames)
+	opt_temp = Namespace()#parser_temp.parse_args()
+	opt_temp.dim = dim
+	opt_temp.distfn = distfn
+	opt_temp.negs = 50 #doesn't matter
+	opt_temp.dset = 'test.tsv' #doesn't matter
+	model, data, model_name, _ = model_class.SNGraphDataset.initialize(distfn, opt_temp, idx, objects, enames)
 	model.load_state_dict(checkpoint['model'])
 	return model
 
@@ -100,11 +99,10 @@ def output_main_package(node_name, sorted_main_packages):
 		if substr.startswith(p):
 			main_package = p
 			break
-	assert(main_package is not None, 'cannot find main package name for node: '+node_name)
+	assert main_package is not None, 'cannot find main package name for node: '+node_name
 	return main_package
 
 
-'''
 def output_last_token(s, duplicate_file):
 	#NOTE: update this depending on how token suffixes are generated!!!
 	all_duplicate_strs = []
@@ -120,7 +118,7 @@ def output_last_token(s, duplicate_file):
 	if last in all_duplicate_strs:
 		last = last + '_' + s.strip()[:(-length-1)]
 	return last
-'''
+
 
 def find_nn(val_filename, model, checkpoint_file, enames_train, shortest_path_dict, out_file, duplicate_file, n_top=5, epoch=None): #train_dset
 	#GOAL: print n_top top ranked nearest neighbors
@@ -194,7 +192,7 @@ def find_shortest_path(model, checkpoint_file, shortest_path_dict, epoch=None):
 	if model is None:
 		model = load_model(checkpoint_file)
 	lt = model.embedding()
-
+	print('REACH HERE')
 	for idx1 in shortest_path_dict.keys():
 		for idx2 in shortest_path_dict[idx1]:
 			if idx2 <= idx1: #avoid repeated calculation
