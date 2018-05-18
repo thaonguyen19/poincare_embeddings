@@ -124,7 +124,6 @@ def find_nn(val_filename, model, checkpoint_file, enames_train, shortest_path_di
 	#GOAL: print n_top top ranked nearest neighbors
 	#how to compute dist given a linkage of packages - for each import, go through all other imports (starting from sklearn), as long as it exceeds the min_dist, break and move on the next search
 	all_val_strs = []
-
 	with open(val_filename, 'r') as f:
 		for line in f:
 			all_val_strs.append(line.strip())
@@ -224,10 +223,10 @@ def find_shortest_path(model, checkpoint_file, shortest_path_dict, epoch=None):
 	# 	plt.close(fig)
 		
 
-def norm_check(model, checkpoint_file, all_val_data, epoch=None):
+def norm_check(model, checkpoint_file, all_val_data, normalized, min_length=0, epoch=None):
 	'''Output plot of norm versus distance from ROOT - a sanity check 
 	to make sure that norm is proportional to how deep we are down the package'''
-	plt_name = 'Norm_vs_dist_ROOT'
+	plt_name = 'Norm_vs_dist_normalized_' + str(normalized) + '_minlen_' + str(min_length)
 	if epoch is not None:
 		plt_name += ('_' + str(epoch))
 
@@ -238,13 +237,19 @@ def norm_check(model, checkpoint_file, all_val_data, epoch=None):
 	for val_idx_list in all_val_data:
 		#root_idx = val_idx_list[0]
 		#root_vector = lt[root_idx, :]
+		if len(val_idx_list) < min_length:
+			continue
 		last_idx = val_idx_list[-1]
 		last_norm = np.linalg.norm(lt[last_idx, :])
-		for i in range(1, len(val_idx_list)-1): #i = distance to root
-			Ys.append(i)
+		for i in range(1, len(val_idx_list)): #i = distance to root
 			curr_idx = val_idx_list[i]
-			normalized_dist = np.linalg.norm(lt[curr_idx, :])/last_norm
-			Xs.append(normalized_dist)
+			dist = np.linalg.norm(lt[curr_idx, :])
+			if normalized:
+				dist = dist/last_norm
+			if normalized and i == len(val_idx_list)-1:
+				continue #don't plot the last token in every statement
+			Ys.append(dist)
+			Xs.append(i)
 		#add plot data for last vector? Currently assume it's near the boundary 
 		
 	print("plotting %d points" % len(Xs))

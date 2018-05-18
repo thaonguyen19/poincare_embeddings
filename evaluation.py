@@ -24,9 +24,6 @@ if __name__ == '__main__':
 	parser.add_argument('-interval', help='Interval to evaluate', type=int)
 	opt = parser.parse_args()
 	#opt.dir = '/lfs/hyperion/0/thaonguyen/poincare_embeddings/trained_model_0513/'
-	#opt.max_epoch = 575
-	#opt.interval = 25
-	#idx, _, _ = slurp(train_dset)
 	all_val_data = []
 	G_train, enames_inv_train, enames_train = build_graph(opt.train_file)
 	with open(opt.val_file, 'r') as fval:
@@ -80,9 +77,9 @@ if __name__ == '__main__':
 		if i + opt.interval > opt.max_epoch: #or checkpoint_file is not None:
 			out_file = checkpoint_file[:-4] + '_nn.txt'
 			checkpoint_file = opt.dir+checkpoint_file
-			find_shortest_path(None, checkpoint_file, shortest_path_dict, epoch=i-1)
+			#find_shortest_path(None, checkpoint_file, shortest_path_dict, epoch=i-1)
 			if i + opt.interval > opt.max_epoch: #last epoch
 				print("norm_check for epoch ", str(i))
-				norm_check(None, checkpoint_file, all_val_data, epoch=i-1)
+				norm_check(None, checkpoint_file, all_val_data, False, epoch=i-1)
 				print("find_nn for epoch ", str(i))
 				#find_nn(val_filename, None, checkpoint_file, enames_train, shortest_path_dict_train, out_file, duplicate_file, n_top=5, epoch=i-1)
