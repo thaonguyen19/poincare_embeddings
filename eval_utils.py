@@ -10,6 +10,7 @@ import model as model_class
 from scipy.stats import pearsonr
 from argparse import Namespace
 
+
 def build_graph(dataset, directed=False):
 	if directed:
 		G = nx.DiGraph()
@@ -26,6 +27,23 @@ def build_graph(dataset, directed=False):
 		row = idx[r, :]
 		G.add_edge(row[1], row[0])
 	return G, enames_inv, dict(enames)
+
+
+def length_stats(sorted_file):
+	plt_data = []
+	with open(sorted_file, 'r') as file:
+		for line in file:
+			tokens = line.strip().split('.')
+			plt_data.append(len(tokens))
+	n_bins = max(plt_data)
+	all_values = set(plt_data)
+	print(all_values)
+	fig = plt.figure()
+	plt.hist(plt_data, bins=list(range(n_bins)))
+	plt.xlabel('Length of import sequence')
+	plt.ylabel('Number of data points')
+	plt.show()
+	plt.close(fig)
 
 
 def check_all_connected(dataset):
@@ -80,7 +98,7 @@ def load_model(checkpoint_file):
 	idx, objects, enames = slurp(tsv_file)
 	dim = checkpoint['dim']
 	distfn = checkpoint['distfn']
-	opt_temp = Namespace()#parser_temp.parse_args()
+	opt_temp = Namespace()
 	opt_temp.dim = dim
 	opt_temp.distfn = distfn
 	opt_temp.negs = 50 #doesn't matter
@@ -123,6 +141,7 @@ def output_last_token(s, duplicate_file):
 def find_nn(val_filename, model, checkpoint_file, enames_train, shortest_path_dict, out_file, duplicate_file, n_top=5, epoch=None): #train_dset
 	#GOAL: print n_top top ranked nearest neighbors
 	#how to compute dist given a linkage of packages - for each import, go through all other imports (starting from sklearn), as long as it exceeds the min_dist, break and move on the next search
+	print("find_nn for epoch ", str(epoch))
 	all_val_strs = []
 	with open(val_filename, 'r') as f:
 		for line in f:
@@ -181,17 +200,16 @@ def find_nn(val_filename, model, checkpoint_file, enames_train, shortest_path_di
 
 
 def find_shortest_path(model, checkpoint_file, shortest_path_dict, epoch=None):
+	print("find_shortest_path for epoch ", str(epoch))
 	plt_name = 'shortest_path'
 	if epoch is not None:
 		plt_name += ('_' + str(epoch))
 
 	Xs = []
 	Ys = []
-	#n_nodes = len(enames_inv.items())
 	if model is None:
 		model = load_model(checkpoint_file)
 	lt = model.embedding()
-	print('REACH HERE')
 	for idx1 in shortest_path_dict.keys():
 		for idx2 in shortest_path_dict[idx1]:
 			if idx2 <= idx1: #avoid repeated calculation
@@ -223,10 +241,11 @@ def find_shortest_path(model, checkpoint_file, shortest_path_dict, epoch=None):
 	# 	plt.close(fig)
 		
 
-def norm_check(model, checkpoint_file, all_val_data, normalized, min_length=0, epoch=None):
+def norm_check(model, checkpoint_file, out_dir, all_val_data, normalized, min_length=0, epoch=None):
 	'''Output plot of norm versus distance from ROOT - a sanity check 
 	to make sure that norm is proportional to how deep we are down the package'''
-	plt_name = 'Norm_vs_dist_normalized_' + str(normalized) + '_minlen_' + str(min_length)
+	print("norm_check for epoch ", str(epoch))
+	plt_name = out_dir + 'Norm_vs_dist_normalized_' + str(normalized) + '_minlen_' + str(min_length)
 	if epoch is not None:
 		plt_name += ('_' + str(epoch))
 
@@ -250,8 +269,7 @@ def norm_check(model, checkpoint_file, all_val_data, normalized, min_length=0, e
 				continue #don't plot the last token in every statement
 			Ys.append(dist)
 			Xs.append(i)
-		#add plot data for last vector? Currently assume it's near the boundary 
-		
+	
 	print("plotting %d points" % len(Xs))
 	fig = plt.figure()
 	plt.scatter(Xs, Ys, alpha=0.1, s=1, c='b')
@@ -263,5 +281,7 @@ def norm_check(model, checkpoint_file, all_val_data, normalized, min_length=0, e
 
 
 if __name__ == '__main__':
-	check_cycle('./package_renamed_wo_clique/functions_04182018_train.tsv', False)
+	length_stats('./package_renamed_wo_clique/functions_04182018_val')
+	#check_cycle('./package_renamed_wo_clique/functions_04182018_train.tsv', False)
 	#check_all_connected('./package_renamed_basic_clique/functions_04182018_train.tsv')
+
