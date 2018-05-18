@@ -40,10 +40,10 @@ def check_all_connected(dataset):
 				break
 
 
-def check_cycle(dataset):
+def check_cycle(dataset, directed):
 	print("checking cycle...")
 	assert('wo_cycle' in dataset or 'wo_clique' in dataset or 'wo_duplicate' in dataset) #file where 'undirected' edges between duplicated package names have not been added
-	G, enames_inv, enames = build_graph(dataset, directed=True)	
+	G, enames_inv, enames = build_graph(dataset, directed)	
 	new_dataset = dataset[:-4] + '_no_cycle.tsv'
 	cycle_nodes = set()
 
@@ -199,7 +199,9 @@ def find_shortest_path(model, idx, checkpoint_file, shortest_path_dict, result_d
 	plt.scatter(Xs, Ys, alpha=0.1, s=1, c='b')
 	plt.xlabel('True distance')
 	plt.ylabel('Embedded distance')
-	fig.savefig(plt_name+'.png', format='png')
+	model_pkl = checkpoint_file.split('/')[-1]
+	out_dir = checkpoint_file[:-len(model_pkl)]
+	fig.savefig(out_dir + plt_name+'.png', format='png')
 	plt.close(fig)
 	print(pearsonr(np.array(Xs), np.array(Ys)))
 
@@ -232,11 +234,13 @@ def norm_check(model, idx, checkpoint_file, enames_train, G_train):
 	plt.scatter(Xs, Ys, alpha=0.1, s=1, c='b')
 	plt.xlabel('Distance to ROOT')
 	plt.ylabel('Norm of embedding vector')
-	fig.savefig('Norm_vs_dist_ROOT.png', format='png')
+	model_pkl = checkpoint_file.split('/')[-1]
+	out_dir = checkpoint_file[:-len(model_pkl)]
+	fig.savefig(out_dir + 'Norm_vs_dist_ROOT.png', format='png')
 	plt.close(fig)
 	print(pearsonr(np.array(Xs), np.array(Ys)))
 
 
 if __name__ == '__main__':
-	#check_cycle('./package_renamed_wo_clique/functions_04182018_train.tsv')
-	check_all_connected('./package_renamed_basic_clique/functions_04182018_train.tsv')
+	check_cycle('./package_renamed_wo_clique/functions_04182018_train.tsv', False)
+	#check_all_connected('./package_renamed_basic_clique/functions_04182018_train.tsv')
