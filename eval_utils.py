@@ -253,6 +253,8 @@ def norm_check(model, checkpoint_file, out_dir, all_val_data, normalized, min_le
 		model = load_model(checkpoint_file)
 	lt = model.embedding()
 	Xs, Ys = [], []
+	Xs_last, Ys_last = [], []
+
 	for val_idx_list in all_val_data:
 		#root_idx = val_idx_list[0]
 		#root_vector = lt[root_idx, :]
@@ -260,6 +262,8 @@ def norm_check(model, checkpoint_file, out_dir, all_val_data, normalized, min_le
 			continue
 		last_idx = val_idx_list[-1]
 		last_norm = np.linalg.norm(lt[last_idx, :])
+		Xs_last.append(len(val_idx_list) - 1)
+		Ys_last.append(last_norm)
 		for i in range(1, len(val_idx_list)): #i = distance to root
 			curr_idx = val_idx_list[i]
 			dist = np.linalg.norm(lt[curr_idx, :])
@@ -270,11 +274,19 @@ def norm_check(model, checkpoint_file, out_dir, all_val_data, normalized, min_le
 			Ys.append(dist)
 			Xs.append(i)
 	
+	print("plotting %d points" % len(Xs_last))
+	fig = plt.figure()
+	plt.scatter(Xs, Ys, alpha=0.3, s=3, c='b')
+	plt.xlabel('Length of import sequence')
+	plt.ylabel('Norm of embedding vector of last token')
+	fig.savefig('Largest_norm_distr_epoch_' + str(epoch) + '.png', format='png')
+	plt.close(fig)
+
 	print("plotting %d points" % len(Xs))
 	fig = plt.figure()
 	plt.scatter(Xs, Ys, alpha=0.1, s=1, c='b')
 	plt.xlabel('Distance to ROOT')
-	plt.ylabel('Norm of embedding vector (normalized)')
+	plt.ylabel('Norm of embedding vector')
 	fig.savefig(plt_name+'.png', format='png')
 	plt.close(fig)
 	print(pearsonr(np.array(Xs), np.array(Ys)))
