@@ -91,7 +91,22 @@ def load_model(checkpoint_file):
 	return model
 
 
+def output_main_package(node_name, sorted_main_packages):
+	#NOTE: update this depending on how token suffixes are generated!!!
+	main_package = None
+	start = node_name.find('-')
+	substr = node_name[(start+1):]
+	for p in sorted_main_packages:
+		if substr.startswith(p):
+			main_package = p
+			break
+	assert(main_package is not None, 'cannot find main package name for node: '+node_name)
+	return main_package
+
+
+'''
 def output_last_token(s, duplicate_file):
+	#NOTE: update this depending on how token suffixes are generated!!!
 	all_duplicate_strs = []
 	with open(duplicate_file, 'r') as f:
 		for line in f:
@@ -105,9 +120,9 @@ def output_last_token(s, duplicate_file):
 	if last in all_duplicate_strs:
 		last = last + '_' + s.strip()[:(-length-1)]
 	return last
+'''
 
-
-def find_nn(val_filename, model, idx, checkpoint_file, enames_train, shortest_path_dict, out_file, duplicate_file, n_top=5, epoch=None): #train_dset
+def find_nn(val_filename, model, checkpoint_file, enames_train, shortest_path_dict, out_file, duplicate_file, n_top=5, epoch=None): #train_dset
 	#GOAL: print n_top top ranked nearest neighbors
 	#how to compute dist given a linkage of packages - for each import, go through all other imports (starting from sklearn), as long as it exceeds the min_dist, break and move on the next search
 	all_val_strs = []
@@ -168,15 +183,10 @@ def find_nn(val_filename, model, idx, checkpoint_file, enames_train, shortest_pa
 			fout.write('\n')
 
 
-def find_shortest_path(model, idx, checkpoint_file, shortest_path_dict, result_dict=None, epoch=None):
-	plt_name = 'plt_'
-	if result_dict is not None:
-		for k, v in result_dict.items():
-			plt_name += ('_'.join([k, str(v)]))
-			plt_name += '_'
-		plt_name = plt_name[:-1] 
+def find_shortest_path(model, checkpoint_file, shortest_path_dict, epoch=None):
+	plt_name = 'shortest_path'
 	if epoch is not None:
-		plt_name += str(epoch)
+		plt_name += ('_' + str(epoch))
 
 	Xs = []
 	Ys = []
@@ -216,27 +226,35 @@ def find_shortest_path(model, idx, checkpoint_file, shortest_path_dict, result_d
 	# 	plt.close(fig)
 		
 
-def norm_check(model, idx, checkpoint_file, enames_train, G_train):
+def norm_check(model, checkpoint_file, all_val_data, epoch=None):
 	'''Output plot of norm versus distance from ROOT - a sanity check 
 	to make sure that norm is proportional to how deep we are down the package'''
+	plt_name = 'Norm_vs_dist_ROOT'
+	if epoch is not None:
+		plt_name += ('_' + str(epoch))
+
 	if model is None:
 		model = load_model(checkpoint_file)
 	lt = model.embedding()
 	Xs, Ys = [], []
-	root_node_idx = enames_train['ROOT']
-	for _, node_idx in enames_train.items():
-		dist_to_root = nx.shortest_path_length(G_train, source=node_idx, target=root_node_idx)
-		norm = np.linalg.norm(lt[node_idx, :])
-		Xs.append(dist_to_root)
-		Ys.append(norm)
-
+	for val_idx_list in all_val_data:
+		#root_idx = val_idx_list[0]
+		#root_vector = lt[root_idx, :]
+		last_idx = val_idx_list[-1]
+		last_norm = np.linalg.norm(lt[last_idx, :])
+		for i in range(1, len(val_idx_list)-1): #i = distance to root
+			Ys.append(i)
+			curr_idx = val_idx_list[i]
+			normalized_dist = np.linalg.norm(lt[curr_idx, :])/last_norm
+			Xs.append(normalized_dist)
+		#add plot data for last vector? Currently assume it's near the boundary 
+		
+	print("plotting %d points" % len(Xs))
 	fig = plt.figure()
 	plt.scatter(Xs, Ys, alpha=0.1, s=1, c='b')
 	plt.xlabel('Distance to ROOT')
-	plt.ylabel('Norm of embedding vector')
-	model_pkl = checkpoint_file.split('/')[-1]
-	out_dir = checkpoint_file[:-len(model_pkl)]
-	fig.savefig(out_dir + 'Norm_vs_dist_ROOT.png', format='png')
+	plt.ylabel('Norm of embedding vector (normalized)')
+	fig.savefig(plt_name+'.png', format='png')
 	plt.close(fig)
 	print(pearsonr(np.array(Xs), np.array(Ys)))
 
