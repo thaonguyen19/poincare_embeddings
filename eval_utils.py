@@ -241,7 +241,7 @@ def find_shortest_path(model, checkpoint_file, shortest_path_dict, epoch=None):
 	# 	plt.close(fig)
 		
 
-def norm_check(model, checkpoint_file, out_dir, all_val_data, normalized, min_length=0, epoch=None):
+def norm_check(model, checkpoint_file, out_dir, all_val_data, enames_inv_train, normalized, min_length=0, epoch=None, plot=True):
 	'''Output plot of norm versus distance from ROOT - a sanity check 
 	to make sure that norm is proportional to how deep we are down the package'''
 	print("norm_check for epoch ", str(epoch))
@@ -269,27 +269,29 @@ def norm_check(model, checkpoint_file, out_dir, all_val_data, normalized, min_le
 			dist = np.linalg.norm(lt[curr_idx, :])
 			if normalized:
 				dist = dist/last_norm
+				if dist*last_norm > last_norm:
+					print('%s=%f > %s=%f, ratio=%.5f, len=%d' %(enames_inv_train[curr_idx], dist*last_norm, enames_inv_train[last_idx], last_norm, dist, len(val_idx_list) - 1))
 			if normalized and i == len(val_idx_list)-1:
 				continue #don't plot the last token in every statement
 			Ys.append(dist)
 			Xs.append(i)
-	
-	print("plotting %d points" % len(Xs_last))
-	fig = plt.figure()
-	plt.scatter(Xs, Ys, alpha=0.3, s=3, c='b')
-	plt.xlabel('Length of import sequence')
-	plt.ylabel('Norm of embedding vector of last token')
-	fig.savefig('Largest_norm_distr_epoch_' + str(epoch) + '.png', format='png')
-	plt.close(fig)
+	if plot:	
+		print("plotting %d points" % len(Xs_last))
+		fig = plt.figure()
+		plt.scatter(Xs_last, Ys_last, alpha=0.3, s=3, c='b')
+		plt.xlabel('Length of import sequence')
+		plt.ylabel('Norm of embedding vector of last token')
+		fig.savefig(out_dir+'Largest_norm_distr_epoch_' + str(epoch) + '.png', format='png')
+		plt.close(fig)
 
-	print("plotting %d points" % len(Xs))
-	fig = plt.figure()
-	plt.scatter(Xs, Ys, alpha=0.1, s=1, c='b')
-	plt.xlabel('Distance to ROOT')
-	plt.ylabel('Norm of embedding vector')
-	fig.savefig(plt_name+'.png', format='png')
-	plt.close(fig)
-	print(pearsonr(np.array(Xs), np.array(Ys)))
+		print("plotting %d points" % len(Xs))
+		fig = plt.figure()
+		plt.scatter(Xs, Ys, alpha=0.3, s=3, c='r')
+		plt.xlabel('Distance to ROOT')
+		plt.ylabel('Norm of embedding vector')
+		fig.savefig(plt_name+'.png', format='png')
+		plt.close(fig)
+		print(pearsonr(np.array(Xs), np.array(Ys)))
 
 
 if __name__ == '__main__':

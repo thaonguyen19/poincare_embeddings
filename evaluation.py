@@ -65,7 +65,6 @@ if __name__ == '__main__':
 		shortest_path_dict = dict(shortest_path_dict)
 		pickle.dump(shortest_path_dict, open(shortest_path_dict_file, 'wb'))
 
-	print(opt.dir, opt.max_epoch, opt.interval, opt.val_file)
 	for i in range(opt.interval, opt.max_epoch+1, opt.interval):
 		suffix = '_epoch_'+str(i-1)+'.pth'
 		checkpoint_file = None
@@ -79,5 +78,6 @@ if __name__ == '__main__':
 			checkpoint_file = opt.dir+checkpoint_file
 			#find_shortest_path(None, checkpoint_file, shortest_path_dict, epoch=i-1)
 			if i + opt.interval > opt.max_epoch: #last epoch
-				norm_check(None, checkpoint_file, opt.dir, all_val_data, False, epoch=i-1)
+				norm_check(None, checkpoint_file, opt.dir, all_val_data, enames_inv_train, False, epoch=i-1, plot=True)
 				#find_nn(val_filename, None, checkpoint_file, enames_train, shortest_path_dict_train, out_file, duplicate_file, n_top=5, epoch=i-1)
+		plt.close('all')
