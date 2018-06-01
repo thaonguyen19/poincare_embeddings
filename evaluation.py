@@ -65,7 +65,6 @@ if __name__ == '__main__':
 					continue
 				dist_ij = nx.shortest_path_length(G_train, source=i, target=j)
 				shortest_path_dict[i][j] = dist_ij
-				shortest_path_dict = new(shortest_path_dict)
 			#shortest_path_dict[train_idx_i][train_idx_i] = 0
 		shortest_path_dict = dict(shortest_path_dict)
 		pickle.dump(shortest_path_dict, open(shortest_path_dict_file, 'wb'))
@@ -84,7 +83,7 @@ if __name__ == '__main__':
 				break
 		
 		checkpoint_file = opt.dir+checkpoint_file
-		find_shortest_path(None, checkpoint_file, shortest_path_dict, all_leaf_nodes, epoch=i-1)
+		find_shortest_path(None, checkpoint_file, shortest_path_dict, enames_inv_train, all_leaf_nodes, epoch=i-1)
 		norm_check(None, checkpoint_file, opt.dir, all_val_data, enames_inv_train, False, epoch=i-1, plot=True)
 		#find_nn(val_filename, None, checkpoint_file, enames_train, shortest_path_dict_train, duplicate_file, n_top=5, epoch=i-1)
 		plt.close('all')

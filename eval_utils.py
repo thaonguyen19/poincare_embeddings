@@ -10,6 +10,11 @@ import model as model_class
 from scipy.stats import pearsonr
 from argparse import Namespace
 
+#MAIN_PACKAGES = ['shutil', 'http', 'pickle', 'collections', 'bz2', 'subprocess', 'array', 'tempfile', 'glob', 'inspect', 're', 'py', 'uuid', \
+#				'numpy', 'copy', '_pytest', 'os', 'functools', 'minpack', 'gzip', 'genericpath', 'matplotlib', 'sympy', 'quadpack', 'abc', \
+#				'decimal', 'datetime', 'mtrand', 'tokenize', '_pickle', 'pkgutil', 'unittest', 'contextlib', 'numbers', 'sklearn', 'multiprocessing',\
+#				'jinja2', 'itertools', '_io', 'pandas', 'scipy', 'threading', 'pytz', 'dateutil', 'pathlib', 'urllib', 'mmap', 'nose', 'random', 'posixpath', 'ctypes', 'distutils', 'builtins', 'textwrap']
+
 
 def build_graph(dataset, directed=False):
 	if directed:
@@ -200,7 +205,7 @@ def find_nn(val_filename, model, checkpoint_file, enames_train, shortest_path_di
 			fout.write('\n')
 
 
-def find_shortest_path(model, checkpoint_file, shortest_path_dict, all_leaf_nodes, epoch=None):
+def find_shortest_path(model, checkpoint_file, shortest_path_dict, enames_inv_train, all_leaf_nodes, epoch=None):
 	print("find_shortest_path for epoch ", str(epoch))
 	plt_name = 'shortest_path'
 	if epoch is not None:
@@ -222,6 +227,10 @@ def find_shortest_path(model, checkpoint_file, shortest_path_dict, all_leaf_node
 			Xs.append(true_dist)
 			Ys.append(embed_dist)
 			if idx1 in all_leaf_nodes and idx2 in all_leaf_nodes:
+				i1 = enames_inv_train[idx1].find('-')
+				i2 = enames_inv_train[idx2].find('-')
+				if enames_inv_train[idx1][:i1] == enames_inv_train[idx2][:i2]:
+					print(enames_inv_train[idx1], enames_inv_train[idx2])
 				Xs_leaf.append(true_dist)
 				Ys_leaf.append(embed_dist)
 
@@ -231,8 +240,8 @@ def find_shortest_path(model, checkpoint_file, shortest_path_dict, all_leaf_node
 		assert('wo' in checkpoint_file)
 		type_struct = 'wo_clique'
 
-	for X, Y in [(Xs, Ys), (Xs_leaf, Ys_leaf)]:
-		pearson_val = pearsonr(np.array(X), np.array(Y))
+	for X, Y, name in [(Xs, Ys, 'all'), (Xs_leaf, Ys_leaf, 'leaf')]:
+		pearson_val = pearsonr(np.array(X), np.array(Y))[0]
 		n_points = len(X)
 		fig = plt.figure()
 		plt.scatter(X, Y, alpha=0.1, s=1, c='b')
@@ -241,7 +250,7 @@ def find_shortest_path(model, checkpoint_file, shortest_path_dict, all_leaf_node
 		plt.title('%s - %d data points, pearson=%.5f' % (type_struct, n_points, pearson_val))
 		model_pkl = checkpoint_file.split('/')[-1]
 		out_dir = checkpoint_file[:-len(model_pkl)]
-		fig.savefig(out_dir + plt_name+'.png', format='png')
+		fig.savefig(out_dir + plt_name+'_'+name+'.png', format='png')
 		plt.close(fig)
 
 	# if np.max(Xs) != 0 and np.max(Ys) != 0:
@@ -304,7 +313,7 @@ def norm_check(model, checkpoint_file, out_dir, all_val_data, enames_inv_train, 
 		fig.savefig(out_dir+'Largest_norm_distr_epoch_' + str(epoch) + '.png', format='png')
 		plt.close(fig)
 
-		pearson_val = pearsonr(np.array(Xs), np.array(Ys))
+		pearson_val = pearsonr(np.array(Xs), np.array(Ys))[0]
 		n_points = len(Xs)
 		fig = plt.figure()
 		plt.scatter(Xs, Ys, alpha=0.3, s=3, c='r')
