@@ -43,9 +43,7 @@ if __name__ == '__main__':
 
 	all_val_nodes = [node for sublist in all_val_data for node in sublist]
 	all_val_nodes = set(all_val_nodes)
-	############ CHECK ##############
 	all_leaf_nodes = [x for x in all_val_nodes if G_train_directed.out_degree(x)==0 and G_train_directed.in_degree(x)==1] 
-	#################################
 
 	root_idx = enames_train['ROOT']
 	all_val_nodes.remove(root_idx)
@@ -67,6 +65,7 @@ if __name__ == '__main__':
 					continue
 				dist_ij = nx.shortest_path_length(G_train, source=i, target=j)
 				shortest_path_dict[i][j] = dist_ij
+				shortest_path_dict = new(shortest_path_dict)
 			#shortest_path_dict[train_idx_i][train_idx_i] = 0
 		shortest_path_dict = dict(shortest_path_dict)
 		pickle.dump(shortest_path_dict, open(shortest_path_dict_file, 'wb'))

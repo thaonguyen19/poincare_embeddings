@@ -4,6 +4,9 @@ Main packages: ['shutil', 'http', 'pickle', 'collections', 'bz2', 'subprocess', 
 743086 lines
 slurp: objects=82115, edges=743086
 
+- wordnet/mammals_closure.tsv:
+slurp: objects=1181, edges=6541
+
 - package_renamed_wo_clique/functions_04182018_train.tsv
 35551 lines
 slurp: objects=35168, edges=35492

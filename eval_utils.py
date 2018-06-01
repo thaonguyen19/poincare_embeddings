@@ -208,6 +208,8 @@ def find_shortest_path(model, checkpoint_file, shortest_path_dict, all_leaf_node
 
 	Xs = []
 	Ys = []
+	Xs_leaf = []
+	Ys_leaf = []
 	if model is None:
 		model = load_model(checkpoint_file)
 	lt = model.embedding()
@@ -219,17 +221,28 @@ def find_shortest_path(model, checkpoint_file, shortest_path_dict, all_leaf_node
 			embed_dist = np.linalg.norm(lt[idx1, :] - lt[idx2, :])
 			Xs.append(true_dist)
 			Ys.append(embed_dist)
+			if idx1 in all_leaf_nodes and idx2 in all_leaf_nodes:
+				Xs_leaf.append(true_dist)
+				Ys_leaf.append(embed_dist)
 
-	print("plotting %d points" % len(Xs))
-	fig = plt.figure()
-	plt.scatter(Xs, Ys, alpha=0.1, s=1, c='b')
-	plt.xlabel('True distance')
-	plt.ylabel('Embedded distance')
-	model_pkl = checkpoint_file.split('/')[-1]
-	out_dir = checkpoint_file[:-len(model_pkl)]
-	fig.savefig(out_dir + plt_name+'.png', format='png')
-	plt.close(fig)
-	print(pearsonr(np.array(Xs), np.array(Ys)))
+	if 'basic' in checkpoint_file:
+		type_struct = 'basic_clique'
+	else:
+		assert('wo' in checkpoint_file)
+		type_struct = 'wo_clique'
+
+	for X, Y in [(Xs, Ys), (Xs_leaf, Ys_leaf)]:
+		pearson_val = pearsonr(np.array(X), np.array(Y))
+		n_points = len(X)
+		fig = plt.figure()
+		plt.scatter(X, Y, alpha=0.1, s=1, c='b')
+		plt.xlabel('True distance')
+		plt.ylabel('Embedded distance')
+		plt.title('%s - %d data points, pearson=%.5f' % (type_struct, n_points, pearson_val))
+		model_pkl = checkpoint_file.split('/')[-1]
+		out_dir = checkpoint_file[:-len(model_pkl)]
+		fig.savefig(out_dir + plt_name+'.png', format='png')
+		plt.close(fig)
 
 	# if np.max(Xs) != 0 and np.max(Ys) != 0:
 	# 	fig = plt.figure()
@@ -276,23 +289,30 @@ def norm_check(model, checkpoint_file, out_dir, all_val_data, enames_inv_train, 
 				continue #don't plot the last token in every statement
 			Ys.append(dist)
 			Xs.append(i)
-	if plot:	
-		print("plotting %d points" % len(Xs_last))
+	if plot:
+		if 'basic' in checkpoint_file:
+			type_struct = 'basic_clique'
+		else:
+			assert('wo' in checkpoint_file)
+			type_struct = 'wo_clique'
+
 		fig = plt.figure()
 		plt.scatter(Xs_last, Ys_last, alpha=0.3, s=3, c='b')
 		plt.xlabel('Length of import sequence')
 		plt.ylabel('Norm of embedding vector of last token')
+		plt.title('Norms of the last packages - %s, %d statements' % (type_struct, len(Xs_last)))
 		fig.savefig(out_dir+'Largest_norm_distr_epoch_' + str(epoch) + '.png', format='png')
 		plt.close(fig)
 
-		print("plotting %d points" % len(Xs))
+		pearson_val = pearsonr(np.array(Xs), np.array(Ys))
+		n_points = len(Xs)
 		fig = plt.figure()
 		plt.scatter(Xs, Ys, alpha=0.3, s=3, c='r')
 		plt.xlabel('Distance to ROOT')
 		plt.ylabel('Norm of embedding vector')
+		plt.title('Norm of all packages - %s, %d data points, pearson=%.5f' % (type_struct, n_points, pearson_val))
 		fig.savefig(plt_name+'.png', format='png')
 		plt.close(fig)
-		print(pearsonr(np.array(Xs), np.array(Ys)))
 
 
 if __name__ == '__main__':
