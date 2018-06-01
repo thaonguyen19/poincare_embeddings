@@ -43,7 +43,16 @@ if __name__ == '__main__':
 
 	all_val_nodes = [node for sublist in all_val_data for node in sublist]
 	all_val_nodes = set(all_val_nodes)
-	all_leaf_nodes = [x for x in all_val_nodes if G_train_directed.out_degree(x)==0 and G_train_directed.in_degree(x)==1] 
+	all_leaf_nodes = []
+	if 'wo_clique' in opt.dir:
+		all_leaf_nodes = [x for x in all_val_nodes if G_train_directed.out_degree(x)==0 and G_train_directed.in_degree(x)==1] 
+		with open('VAL_LEAF_NAMES.txt', 'w') as file:
+			for n in all_leaf_nodes:
+				file.write(enames_inv_train[n]+'\n')
+	elif 'basic_clique' in opt.dir:
+		with open('VAL_LEAF_NAMES.txt', 'r') as file:
+			for line in file:
+				all_leaf_nodes.append(enames_train[line.strip()])
 
 	root_idx = enames_train['ROOT']
 	all_val_nodes.remove(root_idx)
