@@ -46,9 +46,10 @@ if __name__ == '__main__':
 	all_leaf_nodes = []
 	if 'wo_clique' in opt.dir:
 		all_leaf_nodes = [x for x in all_val_nodes if G_train_directed.out_degree(x)==0 and G_train_directed.in_degree(x)==1] 
-		with open('VAL_LEAF_NAMES.txt', 'w') as file:
-			for n in all_leaf_nodes:
-				file.write(enames_inv_train[n]+'\n')
+		if not os.path.isfile('VAL_LEAF_NAMES.txt'):
+			with open('VAL_LEAF_NAMES.txt', 'w') as file:
+				for n in all_leaf_nodes:
+					file.write(enames_inv_train[n]+'\n')
 	elif 'basic_clique' in opt.dir:
 		with open('VAL_LEAF_NAMES.txt', 'r') as file:
 			for line in file:

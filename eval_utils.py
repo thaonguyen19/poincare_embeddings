@@ -230,7 +230,8 @@ def find_shortest_path(model, checkpoint_file, shortest_path_dict, enames_inv_tr
 				i1 = enames_inv_train[idx1].find('-')
 				i2 = enames_inv_train[idx2].find('-')
 				if enames_inv_train[idx1][:i1] == enames_inv_train[idx2][:i2]:
-					print(enames_inv_train[idx1], enames_inv_train[idx2])
+					if true_dist == 2 or true_dist == 1:
+						print(enames_inv_train[idx1], '   ', enames_inv_train[idx2], '   ', true_dist, '   ', embed_dist)
 				Xs_leaf.append(true_dist)
 				Ys_leaf.append(embed_dist)
 
