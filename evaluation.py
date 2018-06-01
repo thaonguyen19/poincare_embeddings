@@ -21,11 +21,13 @@ if __name__ == '__main__':
 	parser.add_argument('-dup_file', help='File containing duplicates from train set', type=str)
 	parser.add_argument('-train_file', help='File containing train data (tsv)', type=str)
 	parser.add_argument('-max_epoch', help='Maximum epoch', type=int)
-	parser.add_argument('-interval', help='Interval to evaluate', type=int)
+	parser.add_argument('-interval', help='Interval to evaluate', type=int, default=0)
 	opt = parser.parse_args()
 	#opt.dir = '/lfs/hyperion/0/thaonguyen/poincare_embeddings/trained_model_0513/'
 	all_val_data = []
 	G_train, enames_inv_train, enames_train = build_graph(opt.train_file)
+	G_train_directed, _, _ = build_graph(opt.train_file, directed=True)
+
 	with open(opt.val_file, 'r') as fval:
 		for line in fval:
 			tokens = line.strip().split('.')
@@ -41,6 +43,10 @@ if __name__ == '__main__':
 
 	all_val_nodes = [node for sublist in all_val_data for node in sublist]
 	all_val_nodes = set(all_val_nodes)
+	############ CHECK ##############
+	all_leaf_nodes = [x for x in all_val_nodes if G_train_directed.out_degree(x)==0 and G_train_directed.in_degree(x)==1] 
+	#################################
+
 	root_idx = enames_train['ROOT']
 	all_val_nodes.remove(root_idx)
 	print("Number of distinct val nodes (excluding ROOT):", len(all_val_nodes))
@@ -65,7 +71,11 @@ if __name__ == '__main__':
 		shortest_path_dict = dict(shortest_path_dict)
 		pickle.dump(shortest_path_dict, open(shortest_path_dict_file, 'wb'))
 
+	if opt.interval == 0: #evaluate at a single epoch
+		opt.interval = opt.max_epoch
+
 	for i in range(opt.interval, opt.max_epoch+1, opt.interval):
+		print("Evaluating for epoch " + str(i))
 		suffix = '_epoch_'+str(i-1)+'.pth'
 		checkpoint_file = None
 		for file in os.listdir(opt.dir):
@@ -73,11 +83,9 @@ if __name__ == '__main__':
 				checkpoint_file = file
 				print("Found file ", file)
 				break
-		if i + opt.interval > opt.max_epoch: #or checkpoint_file is not None:
-			out_file = checkpoint_file[:-4] + '_nn.txt'
-			checkpoint_file = opt.dir+checkpoint_file
-			#find_shortest_path(None, checkpoint_file, shortest_path_dict, epoch=i-1)
-			if i + opt.interval > opt.max_epoch: #last epoch
-				norm_check(None, checkpoint_file, opt.dir, all_val_data, enames_inv_train, False, epoch=i-1, plot=True)
-				#find_nn(val_filename, None, checkpoint_file, enames_train, shortest_path_dict_train, out_file, duplicate_file, n_top=5, epoch=i-1)
+		
+		checkpoint_file = opt.dir+checkpoint_file
+		find_shortest_path(None, checkpoint_file, shortest_path_dict, all_leaf_nodes, epoch=i-1)
+		norm_check(None, checkpoint_file, opt.dir, all_val_data, enames_inv_train, False, epoch=i-1, plot=True)
+		#find_nn(val_filename, None, checkpoint_file, enames_train, shortest_path_dict_train, duplicate_file, n_top=5, epoch=i-1)
 		plt.close('all')

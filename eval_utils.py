@@ -138,9 +138,10 @@ def output_last_token(s, duplicate_file):
 	return last
 
 
-def find_nn(val_filename, model, checkpoint_file, enames_train, shortest_path_dict, out_file, duplicate_file, n_top=5, epoch=None): #train_dset
+def find_nn(val_filename, model, checkpoint_file, enames_train, shortest_path_dict, duplicate_file, n_top=5, epoch=None): #train_dset
 	#GOAL: print n_top top ranked nearest neighbors
 	#how to compute dist given a linkage of packages - for each import, go through all other imports (starting from sklearn), as long as it exceeds the min_dist, break and move on the next search
+	out_file = checkpoint_file[:-4] + '_nn.txt'
 	print("find_nn for epoch ", str(epoch))
 	all_val_strs = []
 	with open(val_filename, 'r') as f:
@@ -199,7 +200,7 @@ def find_nn(val_filename, model, checkpoint_file, enames_train, shortest_path_di
 			fout.write('\n')
 
 
-def find_shortest_path(model, checkpoint_file, shortest_path_dict, epoch=None):
+def find_shortest_path(model, checkpoint_file, shortest_path_dict, all_leaf_nodes, epoch=None):
 	print("find_shortest_path for epoch ", str(epoch))
 	plt_name = 'shortest_path'
 	if epoch is not None:
