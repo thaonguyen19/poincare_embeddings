@@ -10,10 +10,10 @@ import model as model_class
 from scipy.stats import pearsonr
 from argparse import Namespace
 
-#MAIN_PACKAGES = ['shutil', 'http', 'pickle', 'collections', 'bz2', 'subprocess', 'array', 'tempfile', 'glob', 'inspect', 're', 'py', 'uuid', \
-#				'numpy', 'copy', '_pytest', 'os', 'functools', 'minpack', 'gzip', 'genericpath', 'matplotlib', 'sympy', 'quadpack', 'abc', \
-#				'decimal', 'datetime', 'mtrand', 'tokenize', '_pickle', 'pkgutil', 'unittest', 'contextlib', 'numbers', 'sklearn', 'multiprocessing',\
-#				'jinja2', 'itertools', '_io', 'pandas', 'scipy', 'threading', 'pytz', 'dateutil', 'pathlib', 'urllib', 'mmap', 'nose', 'random', 'posixpath', 'ctypes', 'distutils', 'builtins', 'textwrap']
+MAIN_PACKAGES = ['shutil', 'http', 'pickle', 'collections', 'bz2', 'subprocess', 'array', 'tempfile', 'glob', 'inspect', 're', 'py', 'uuid', \
+				'numpy', 'copy', '_pytest', 'os', 'functools', 'minpack', 'gzip', 'genericpath', 'matplotlib', 'sympy', 'quadpack', 'abc', \
+				'decimal', 'datetime', 'mtrand', 'tokenize', '_pickle', 'pkgutil', 'unittest', 'contextlib', 'numbers', 'sklearn', 'multiprocessing',\
+				'jinja2', 'itertools', '_io', 'pandas', 'scipy', 'threading', 'pytz', 'dateutil', 'pathlib', 'urllib', 'mmap', 'nose', 'random', 'posixpath', 'ctypes', 'distutils', 'builtins', 'textwrap']
 
 
 def build_graph(dataset, directed=False):
@@ -113,12 +113,13 @@ def load_model(checkpoint_file):
 	return model
 
 
-def output_main_package(node_name, sorted_main_packages):
+def output_main_package(node_name):
+	MAIN_PACKAGES.sort(key = lambda s: -len(s))
 	#NOTE: update this depending on how token suffixes are generated!!!
 	main_package = None
 	start = node_name.find('-')
 	substr = node_name[(start+1):]
-	for p in sorted_main_packages:
+	for p in MAIN_PACKAGES:
 		if substr.startswith(p):
 			main_package = p
 			break
@@ -211,10 +212,12 @@ def find_shortest_path(model, checkpoint_file, shortest_path_dict, enames_inv_tr
 	if epoch is not None:
 		plt_name += ('_' + str(epoch))
 
-	Xs = []
-	Ys = []
-	Xs_leaf = []
-	Ys_leaf = []
+	Xs, Ys = [], []
+	Xs_leaf, Ys_leaf = [], []
+	Xs_np, Ys_np = [], []
+	Xs_scipy, Ys_scipy = [], []
+	Xs_skl, Ys_skl = [], []
+
 	if model is None:
 		model = load_model(checkpoint_file)
 	lt = model.embedding()
@@ -229,11 +232,22 @@ def find_shortest_path(model, checkpoint_file, shortest_path_dict, enames_inv_tr
 			if idx1 in all_leaf_nodes and idx2 in all_leaf_nodes:
 				i1 = enames_inv_train[idx1].find('-')
 				i2 = enames_inv_train[idx2].find('-')
-				if enames_inv_train[idx1][:i1] == enames_inv_train[idx2][:i2]:
+				if enames_inv_train[idx1][:i1] == enames_inv_train[idx2][:i2]:#duplicate nodes
 					if true_dist == 2 or true_dist == 1:
 						print(enames_inv_train[idx1], '   ', enames_inv_train[idx2], '   ', true_dist, '   ', embed_dist)
 				Xs_leaf.append(true_dist)
 				Ys_leaf.append(embed_dist)
+				main1 = output_main_package(enames_inv_train[idx1])
+				main2 = output_main_package(enames_inv_train[idx2])
+				if main1 == 'numpy' and main2 == 'numpy':
+					Xs_np.append(true_dist)
+					Ys_np.append(embed_dist)	
+				elif main1 == 'scipy' and main2 == 'scipy':
+					Xs_scipy.append(true_dist)
+					Ys_scipy.append(embed_dist)
+				elif main1 == 'sklearn' and main2 == 'sklearn':
+					Xs_skl.append(true_dist)
+					Ys_skl.append(embed_dist)
 
 	if 'basic' in checkpoint_file:
 		type_struct = 'basic_clique'
@@ -241,7 +255,7 @@ def find_shortest_path(model, checkpoint_file, shortest_path_dict, enames_inv_tr
 		assert('wo' in checkpoint_file)
 		type_struct = 'wo_clique'
 
-	for X, Y, name in [(Xs, Ys, 'all'), (Xs_leaf, Ys_leaf, 'leaf')]:
+	for X, Y, name in [(Xs, Ys, 'all'), (Xs_leaf, Ys_leaf, 'leaf'), (Xs_np, Ys_np, 'numpy'), (Xs_scipy, Ys_scipy, 'scipy'), (Xs_skl, Ys_skl, 'sklearn')]:
 		pearson_val = pearsonr(np.array(X), np.array(Y))[0]
 		n_points = len(X)
 		fig = plt.figure()

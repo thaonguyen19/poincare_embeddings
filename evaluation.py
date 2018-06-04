@@ -54,11 +54,12 @@ if __name__ == '__main__':
 		with open('VAL_LEAF_NAMES.txt', 'r') as file:
 			for line in file:
 				all_leaf_nodes.append(enames_train[line.strip()])
+	print("Number of leaf nodes in val set:", len(all_leaf_nodes))
 
 	root_idx = enames_train['ROOT']
 	all_val_nodes.remove(root_idx)
 	print("Number of distinct val nodes (excluding ROOT):", len(all_val_nodes))
-	MAIN_PACKAGES.sort(key = lambda s: -len(s))
+	#MAIN_PACKAGES.sort(key = lambda s: -len(s))
 
 	shortest_path_dict_file = opt.dir + 'shortest_path_dict_eval_new.pkl'
 	if os.path.isfile(shortest_path_dict_file):
@@ -71,7 +72,7 @@ if __name__ == '__main__':
 			for j in all_val_nodes:
 				if j <= i:
 					continue
-				if output_main_package(enames_inv_train[i], MAIN_PACKAGES) != output_main_package(enames_inv_train[j], MAIN_PACKAGES): #i and j are in different main branches
+				if output_main_package(enames_inv_train[i]) != output_main_package(enames_inv_train[j]): #i and j are in different main branches
 					continue
 				dist_ij = nx.shortest_path_length(G_train, source=i, target=j)
 				shortest_path_dict[i][j] = dist_ij
@@ -94,6 +95,6 @@ if __name__ == '__main__':
 		
 		checkpoint_file = opt.dir+checkpoint_file
 		find_shortest_path(None, checkpoint_file, shortest_path_dict, enames_inv_train, all_leaf_nodes, epoch=i-1)
-		norm_check(None, checkpoint_file, opt.dir, all_val_data, enames_inv_train, False, epoch=i-1, plot=True)
+		#norm_check(None, checkpoint_file, opt.dir, all_val_data, enames_inv_train, False, epoch=i-1, plot=True)
 		#find_nn(val_filename, None, checkpoint_file, enames_train, shortest_path_dict_train, duplicate_file, n_top=5, epoch=i-1)
 		plt.close('all')
