@@ -68,13 +68,13 @@ def output_main_package(node, main_nodes, G_train_directed):
 	#Inputs: indices
 	#NOTE: update this depending on how token suffixes are generated!!!
 	main_node, distance = None, 0
-	for main in main_node:
+	for main in main_nodes:
 		if nx.has_path(G_train_directed, main, node):
 			main_node = main
 			distance = nx.shortest_path_length(G_train_directed, main, node)
 			break
-	assert main_package is not None, 'cannot find main package name for node: '+node_name
-	return (main_package, distance)
+	assert main_node is not None, 'cannot find main package name for node: '+node
+	return (main_node, distance)
 
 '''
 def find_nn(val_filename, model, checkpoint_file, enames_train, shortest_path_dict, duplicate_file, n_top=5, epoch=None): #train_dset
@@ -189,7 +189,7 @@ def find_shortest_path(model, checkpoint_file, shortest_path_dict, main_node_dic
 		plt.close(fig)
 		
 
-def norm_check(model, checkpoint_file, out_dir, all_val_data, all_leaf_nodes, main_node_dict, G_train_directed, enames_inv_train, normalized, min_length=0, epoch=None, plot=True):
+def norm_check(model, checkpoint_file, out_dir, all_val_nodes, all_leaf_nodes, main_node_dict, G_train_directed, enames_inv_train, normalized, min_length=0, epoch=None, plot=True):
 	'''Output plot of norm versus distance from ROOT - a sanity check 
 	to make sure that norm is proportional to how deep we are down the package'''
 	print("norm_check for epoch ", str(epoch))
@@ -202,14 +202,14 @@ def norm_check(model, checkpoint_file, out_dir, all_val_data, all_leaf_nodes, ma
 	lt = model.embedding()
 	Xs, Ys = [], []
 	Xs_last, Ys_last = [], []
-
-	for idx in all_val_data:
+	for idx in all_val_nodes:
 		main_node, length_to_main = main_node_dict[idx]
-		norm = np.linalg.norm(lt[curr_idx, :])
+		norm = np.linalg.norm(lt[idx, :])
+		#print(main_node, length_to_main, norm)
 		Ys.append(norm)
 		Xs.append(length_to_main)
 
-		if val_idx in all_leaf_nodes:
+		if idx in all_leaf_nodes:
 			Ys_last.append(norm)
 			Xs_last.append(length_to_main)
 		
@@ -241,4 +241,4 @@ def norm_check(model, checkpoint_file, out_dir, all_val_data, all_leaf_nodes, ma
 
 if __name__ == '__main__':
 	#length_stats('./package_renamed_wo_clique/functions_04182018_val')
-
+	pass
