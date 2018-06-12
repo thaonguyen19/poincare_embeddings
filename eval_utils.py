@@ -232,14 +232,16 @@ def find_shortest_path(model, checkpoint_file, shortest_path_dict, enames_inv_tr
 			if idx1 in all_leaf_nodes and idx2 in all_leaf_nodes:
 				i1 = enames_inv_train[idx1].find('-')
 				i2 = enames_inv_train[idx2].find('-')
-				if enames_inv_train[idx1][:i1] == enames_inv_train[idx2][:i2]:#duplicate nodes
-					if true_dist == 2 or true_dist == 1:
-						print(enames_inv_train[idx1], '   ', enames_inv_train[idx2], '   ', true_dist, '   ', embed_dist)
+				#if enames_inv_train[idx1][:i1] == enames_inv_train[idx2][:i2]:#duplicate nodes
+				#if true_dist == 2 or true_dist == 1:
+				#	print(enames_inv_train[idx1], '   ', enames_inv_train[idx2], '   ', true_dist, '   ', embed_dist)
 				Xs_leaf.append(true_dist)
 				Ys_leaf.append(embed_dist)
 				main1 = output_main_package(enames_inv_train[idx1])
 				main2 = output_main_package(enames_inv_train[idx2])
 				if main1 == 'numpy' and main2 == 'numpy':
+					if true_dist == 3:
+						print(enames_inv_train[idx1], '   ', enames_inv_train[idx2], '   ', true_dist, '   ', embed_dist)
 					Xs_np.append(true_dist)
 					Ys_np.append(embed_dist)	
 				elif main1 == 'scipy' and main2 == 'scipy':
@@ -313,6 +315,7 @@ def norm_check(model, checkpoint_file, out_dir, all_val_data, enames_inv_train, 
 				continue #don't plot the last token in every statement
 			Ys.append(dist)
 			Xs.append(i)
+	
 	if plot:
 		if 'basic' in checkpoint_file:
 			type_struct = 'basic_clique'
