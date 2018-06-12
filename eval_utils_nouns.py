@@ -76,68 +76,10 @@ def output_main_package(node, main_nodes, G_train_directed):
 	assert main_node is not None, 'cannot find main package name for node: '+node
 	return (main_node, distance)
 
-'''
+
 def find_nn(val_filename, model, checkpoint_file, enames_train, shortest_path_dict, duplicate_file, n_top=5, epoch=None): #train_dset
-	#GOAL: print n_top top ranked nearest neighbors
-	#how to compute dist given a linkage of packages - for each import, go through all other imports (starting from sklearn), as long as it exceeds the min_dist, break and move on the next search
-	out_file = checkpoint_file[:-4] + '_nn.txt'
-	print("find_nn for epoch ", str(epoch))
-	all_val_strs = []
-	with open(val_filename, 'r') as f:
-		for line in f:
-			all_val_strs.append(line.strip())
+	pass
 
-
-	print("VAL SET SIZE:", len(all_val_strs))
-	if model is None:
-		model = load_model(checkpoint_file)
-	lt = model.embedding()
-	n_val = len(all_val_strs)
-	dist_scores = np.zeros((n_val, n_val))
-
-	for i in range(n_val):
-		token = output_last_token(all_val_strs[i], duplicate_file)
-		idx1 = enames_train[token]
-
-		for j in range(i+1, n_val):
-			token_compared = output_last_token(all_val_strs[j], duplicate_file)
-			idx2 = enames_train[token_compared]
-			dist = np.linalg.norm(lt[idx1, :] - lt[idx2, :])
-			dist_scores[i][j] = dist
-			dist_scores[j][i] = dist
-
-		dist_scores[i][i] = float('inf') #not to choose the same string as nn
-
-	all_neighbors = np.argpartition(dist_scores, n_top) #find n_top with smallest distances in each row
-	with open(out_file, 'a') as fout:
-		if epoch is None:
-			fout.write('Last epoch\n')
-		else:
-			fout.write('epoch ' + str(epoch) + '\n')
-
-		for i in range(n_val):
-			s = all_val_strs[i]
-			neighbors = []
-			last_token = output_last_token(s, duplicate_file)
-			idx1 = enames_train[last_token]
-
-			for n_idx in all_neighbors[i, :]:
-				neighbor_str = all_val_strs[n_idx]
-				last_token_compared = output_last_token(neighbor_str, duplicate_file)
-				idx2 = enames_train[last_token_compared]
-				#print(last_token, idx1, last_token_compared, idx2)
-				if idx1 <= idx2:
-					true_dist = shortest_path_dict[idx1][idx2]
-				else:
-					true_dist = shortest_path_dict[idx2][idx1]
-				neighbors.append((neighbor_str, dist_scores[i][n_idx], true_dist))
-			neighbors = sorted(neighbors, key = lambda x: x[1])
-
-			fout.write(s + '\n')
-			for j in range(n_top):
-				fout.write(neighbors[j][0] + '\t' + str(neighbors[j][1]) + '\t' + str(neighbors[j][2]) + '\n')
-			fout.write('\n')
-'''
 
 def find_shortest_path(model, checkpoint_file, shortest_path_dict, main_node_dict, enames_inv_train, all_leaf_nodes, epoch=None):
 	print("find_shortest_path for epoch ", str(epoch))
