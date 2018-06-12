@@ -33,7 +33,7 @@ if __name__ == '__main__':
 	print("N VAL:", len(all_val_nodes))
 
 	all_leaf_nodes = [x for x in all_val_nodes if G_train_directed.out_degree(x)==0] 
-	#print("LEAF NAMES:", [enames_inv_train[i] for i in all_leaf_nodes])
+	print("LEAF NAMES:", [enames_inv_train[i] for i in all_leaf_nodes])
 	shortest_path_dict_file = opt.dir + 'shortest_path_dict_eval_new.pkl'
 	if os.path.isfile(shortest_path_dict_file):
 		print("loading shortest path dict pickle file...")
@@ -64,10 +64,10 @@ if __name__ == '__main__':
 			main_node_dict[i] = output_main_package(i, main_nodes, G_train_directed)
 		pickle.dump(main_node_dict, open(main_node_dict_file, 'wb'))
 	#print("MAIN NODE DICT:", len(main_node_dict.keys()))
-	#for tup in list(main_node_dict.items())[:5]:
-	#	main_node, dist = tup[1]
-	#	print(enames_inv_train[main_node], enames_inv_train[tup[0]])
-
+	for tup in list(main_node_dict.items())[:10]:
+		main_node, dist = tup[1]
+		print(enames_inv_train[main_node], enames_inv_train[tup[0]], dist)
+	
 	if opt.interval == 0: #evaluate at a single epoch
 		opt.interval = opt.max_epoch
 
