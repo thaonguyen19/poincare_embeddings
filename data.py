@@ -94,7 +94,7 @@ def create_file_wo_duplicate(tsv_package_file): #to check for cycle
                 fout.write(line)
 
 
-def generate_pairs(package_file, dataset, sep='.'): 
+def generate_pairs(package_file, dataset, depth, sep='.'): 
     #package_file name has format "*_sorted"
     mapping = ddict(set) #map from higher order element to the all direct children in the hierarchy
     all_last_tokens = set()
@@ -108,6 +108,8 @@ def generate_pairs(package_file, dataset, sep='.'):
                 first = package_names[0]
                 for i in range(len(package_names)):
                     package_names[i] = package_names[i] + '-' + first
+                    if depth:
+                        package_names[i] = package_names[i] + '-' + str(i+1)
                 package_names = ['ROOT'] + package_names  
                 for i in range(len(package_names)-2):
                     high, low = package_names[i], package_names[i+1]
@@ -141,7 +143,7 @@ def get_duplicate(duplicate_file_name):
     return result
 
 
-def process_duplicate(duplicate_set, file_read, file_write, clique_type, sep='.'):
+def process_duplicate(duplicate_set, file_read, file_write, clique_type, depth, sep='.'):
     '''clique_type options: wo_clique, full_clique, basic_clique'''
     w = int(DEFAULT_WEIGHT/1)
     duplicate_dict = ddict(set)
@@ -155,6 +157,8 @@ def process_duplicate(duplicate_set, file_read, file_write, clique_type, sep='.'
                 length = len(tokens[-1])
                 for i in range(len(tokens)):
                     tokens[i] = tokens[i] + '-' + first
+                    if depth:
+                        tokens[i] = tokens[i] + '-' + str(i+1)
 
                 if tokens[-1] not in duplicate_set:
                     fout.write(tokens[-1] + '\t' + tokens[-2] + '\n')
@@ -237,7 +241,7 @@ if __name__ == '__main__':
     ### use command line sort <init file> -o <sorted file> to obtain a sorted file
     clique_type = sys.argv[1]
     print("Clique type:", clique_type)
-    main_file = ('./package_renamed_%s/functions_04182018_sorted' % clique_type)
+    main_file = ('./package_depth_closure_%s/functions_04182018_sorted' % clique_type)
     # main_packages = list(find_main_packages(main_file))
     # print(main_packages)
     # with open(main_file, 'r') as f:
@@ -253,5 +257,5 @@ if __name__ == '__main__':
     #debug_file = generate_debug_set(main_file)
     for package_file_sorted in [main_file]:#, debug_file]:
         #sorted_val_file = generate_train_val2(package_file_sorted) 
-        duplicate_set, duplicate_file_name, tsv_package_file = generate_pairs(package_file_sorted, 'train')
-        process_duplicate(duplicate_set, package_file_sorted, tsv_package_file, clique_type=clique_type)
+        duplicate_set, duplicate_file_name, tsv_package_file = generate_pairs(package_file_sorted, 'train', depth=True)
+        process_duplicate(duplicate_set, package_file_sorted, tsv_package_file, clique_type=clique_type, depth=True)

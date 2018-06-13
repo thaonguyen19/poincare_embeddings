@@ -110,7 +110,7 @@ def find_shortest_path(model, checkpoint_file, shortest_path_dict, main_node_dic
 				#		print(enames_inv_train[idx1], '   ', enames_inv_train[idx2], '   ', true_dist, '   ', embed_dist)
 				Xs_leaf.append(true_dist)
 				Ys_leaf.append(embed_dist)
-
+	print("SHORTEST PATH LEAF:", min(Xs_leaf), max(Xs_leaf))
 	if 'noun' in checkpoint_file:
 		type_struct = 'noun'
 	else:
@@ -164,9 +164,9 @@ def norm_check(model, checkpoint_file, out_dir, all_val_nodes, all_leaf_nodes, m
 
 		fig = plt.figure()
 		plt.scatter(Xs_last, Ys_last, alpha=0.3, s=3, c='b')
-		plt.xlabel('Length of import sequence')
-		plt.ylabel('Norm of embedding vector of last token')
-		plt.title('Norms of the last packages - %s, %d statements' % (type_struct, len(Xs_last)))
+		plt.xlabel('Length to main node')
+		plt.ylabel('Norm of embedding vector of leaf')
+		plt.title('Norms of the last leaves - %s, %d leaves' % (type_struct, len(Xs_last)))
 		fig.savefig(out_dir+'Largest_norm_distr_epoch_' + str(epoch) + '.png', format='png')
 		plt.close(fig)
 
@@ -174,9 +174,9 @@ def norm_check(model, checkpoint_file, out_dir, all_val_nodes, all_leaf_nodes, m
 		n_points = len(Xs)
 		fig = plt.figure()
 		plt.scatter(Xs, Ys, alpha=0.3, s=3, c='r')
-		plt.xlabel('Distance to ROOT')
+		plt.xlabel('Distance to main node')
 		plt.ylabel('Norm of embedding vector')
-		plt.title('Norm of all packages - %s, %d data points, pearson=%.5f' % (type_struct, n_points, pearson_val))
+		plt.title('Norm of all nodes - %s, %d data points, pearson=%.5f' % (type_struct, n_points, pearson_val))
 		fig.savefig(plt_name+'.png', format='png')
 		plt.close(fig)
 
