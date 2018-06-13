@@ -217,18 +217,21 @@ def find_shortest_path(model, checkpoint_file, shortest_path_dict, enames_inv_tr
 	Xs_np, Ys_np = [], []
 	Xs_scipy, Ys_scipy = [], []
 	Xs_skl, Ys_skl = [], []
-
 	if model is None:
 		model = load_model(checkpoint_file)
 	lt = model.embedding()
+	#count = 0
 	for idx1 in shortest_path_dict.keys():
 		for idx2 in shortest_path_dict[idx1]:
-			if idx2 <= idx1: #avoid repeated calculation
-				continue
+			#if idx2 <= idx1: #avoid repeated calculation
+			#	continue
 			true_dist = shortest_path_dict[idx1][idx2] ### undirected graph, to avoid complications in computing shortest path
 			embed_dist = np.linalg.norm(lt[idx1, :] - lt[idx2, :])
 			Xs.append(true_dist)
 			Ys.append(embed_dist)
+			#if count < 5:
+			#	count += 1
+			#	print(enames_inv_train[idx1], '   ', enames_inv_train[idx2], '   ', true_dist, '   ', embed_dist)
 			if idx1 in all_leaf_nodes and idx2 in all_leaf_nodes:
 				i1 = enames_inv_train[idx1].find('-')
 				i2 = enames_inv_train[idx2].find('-')

@@ -72,6 +72,13 @@ if __name__ == '__main__':
 	if os.path.isfile(shortest_path_dict_file):
 		print("loading shortest path dict pickle file...")
 		shortest_path_dict = pickle.load(open(shortest_path_dict_file, 'rb'))
+		#import random
+		#examples = random.sample(list(shortest_path_dict.items()), 5)
+		#for k, v_dict in examples:
+		#	node, dist = list(v_dict.items())[0]
+		#	shortest_path = list(nx.shortest_path(G_train, convert_close_to_noclose[k], convert_close_to_noclose[node]))
+		#	print([enames_inv_train[convert_noclose_to_close[x]] for x in shortest_path])
+		#	print(dist)
 	else:
 		print("Constructing shortest path dict...")
 		shortest_path_dict = defaultdict(dict)
