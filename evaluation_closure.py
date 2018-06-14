@@ -20,6 +20,7 @@ if __name__ == '__main__':
 	parser.add_argument('-train_file_noclose', help='File containing non-closure train data (tsv)', type=str)
 	parser.add_argument('-max_epoch', help='Maximum epoch', type=int)
 	parser.add_argument('-interval', help='Interval to evaluate', type=int, default=0)
+	parser.add_argument('-depth', help='Whether package names include depth', type=bool, default=True)
 	opt = parser.parse_args()
 	#opt.dir = '/lfs/hyperion/0/thaonguyen/poincare_embeddings/trained_model_0513/'
 	all_val_data = []
@@ -37,6 +38,8 @@ if __name__ == '__main__':
 			first = tokens[0]
 			for i in range(len(tokens)):
 				tokens[i] = tokens[i] + '-' + first
+				if opt.depth:
+					tokens[i] = tokens[i] + '-' + str(i+1)
 			tokens = ['ROOT'] + tokens
 			tokens[-1] = output_last_token(line.strip(), opt.dup_file)
 			line_idx = []
