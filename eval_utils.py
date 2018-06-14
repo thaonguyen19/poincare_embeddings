@@ -127,7 +127,7 @@ def output_main_package(node_name):
 	return main_package
 
 
-def output_last_token(s, duplicate_file):
+def output_last_token(s, duplicate_file, i=0, depth=False):
 	#NOTE: update this depending on how token suffixes are generated!!!
 	all_duplicate_strs = []
 	with open(duplicate_file, 'r') as f:
@@ -139,6 +139,8 @@ def output_last_token(s, duplicate_file):
 	last = tokens[-1]
 	length = len(last)
 	last = last + '-' + first
+	if depth:
+		last = last + '-' + str(i+1)
 	if last in all_duplicate_strs:
 		last = last + '_' + s.strip()[:(-length-1)]
 	return last
@@ -349,4 +351,3 @@ if __name__ == '__main__':
 	length_stats('./package_renamed_wo_clique/functions_04182018_val')
 	#check_cycle('./package_renamed_wo_clique/functions_04182018_train.tsv', False)
 	#check_all_connected('./package_renamed_basic_clique/functions_04182018_train.tsv')
-

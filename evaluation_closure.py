@@ -41,7 +41,10 @@ if __name__ == '__main__':
 				if opt.depth:
 					tokens[i] = tokens[i] + '-' + str(i+1)
 			tokens = ['ROOT'] + tokens
-			tokens[-1] = output_last_token(line.strip(), opt.dup_file)
+			if opt.depth:
+				tokens[-1] = output_last_token(line.strip(), opt.dup_file, i=len(tokens)-1, depth=True)
+			else:
+				tokens[-1] = output_last_token(line.strip(), opt.dup_file)
 			line_idx = []
 			for i in range(len(tokens)):
 				line_idx.append(enames_train[tokens[i]])
