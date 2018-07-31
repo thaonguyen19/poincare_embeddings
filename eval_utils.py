@@ -245,8 +245,9 @@ def find_shortest_path(model, checkpoint_file, shortest_path_dict, enames_inv_tr
 				main1 = output_main_package(enames_inv_train[idx1])
 				main2 = output_main_package(enames_inv_train[idx2])
 				if main1 == 'numpy' and main2 == 'numpy':
-					if true_dist == 3:
-						print(enames_inv_train[idx1], '   ', enames_inv_train[idx2], '   ', true_dist, '   ', embed_dist)
+					#if true_dist == 3:
+						#k = True
+						#print(enames_inv_train[idx1], '   ', enames_inv_train[idx2], '   ', true_dist, '   ', embed_dist)
 					Xs_np.append(true_dist)
 					Ys_np.append(embed_dist)	
 				elif main1 == 'scipy' and main2 == 'scipy':

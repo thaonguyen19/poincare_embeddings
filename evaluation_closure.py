@@ -21,6 +21,7 @@ if __name__ == '__main__':
 	parser.add_argument('-max_epoch', help='Maximum epoch', type=int)
 	parser.add_argument('-interval', help='Interval to evaluate', type=int, default=0)
 	parser.add_argument('-depth', help='Whether package names include depth', type=bool, default=True)
+	parser.add_argument('-same_main_package', help='Whether to evaluate only on nodes under the same main package', type=bool, default=False)
 	opt = parser.parse_args()
 	#opt.dir = '/lfs/hyperion/0/thaonguyen/poincare_embeddings/trained_model_0513/'
 	all_val_data = []
@@ -41,13 +42,11 @@ if __name__ == '__main__':
 				if opt.depth:
 					tokens[i] = tokens[i] + '-' + str(i+1)
 			tokens = ['ROOT'] + tokens
-			print(tokens)
 			if opt.depth:
 				tokens[-1] = output_last_token(line.strip(), opt.dup_file, i=len(tokens)-2, depth=True)
 			else:
 				tokens[-1] = output_last_token(line.strip(), opt.dup_file)
 			line_idx = []
-			print(tokens)
 			for i in range(len(tokens)):
 				line_idx.append(enames_train[tokens[i]])
 			all_val_data.append(line_idx)
@@ -61,10 +60,11 @@ if __name__ == '__main__':
 			if G_train_directed.out_degree(noclose_idx)==0 and G_train_directed.in_degree(noclose_idx)==1:
 				all_leaf_nodes.append(close_idx)
 
-		if not os.path.isfile('VAL_LEAF_NAMES.txt'):
-			with open('VAL_LEAF_NAMES.txt', 'w') as file:
-				for n in all_leaf_nodes:
-					file.write(enames_inv_train[n]+'\n')
+		if os.path.isfile('VAL_LEAF_NAMES.txt'):
+			os.remove('VAL_LEAF_NAMES.txt')
+		with open('VAL_LEAF_NAMES.txt', 'w') as file:
+			for n in all_leaf_nodes:
+				file.write(enames_inv_train[n]+'\n')
 	elif 'basic_clique' in opt.dir:
 		with open('VAL_LEAF_NAMES.txt', 'r') as file:
 			for line in file:
@@ -88,14 +88,17 @@ if __name__ == '__main__':
 		#	print([enames_inv_train[convert_noclose_to_close[x]] for x in shortest_path])
 		#	print(dist)
 	else:
+		#if os.path.isfile(shortest_path_dict_file):
+		#	os.remove(shortest_path_dict_file)
 		print("Constructing shortest path dict...")
 		shortest_path_dict = defaultdict(dict)
 		for i in all_val_nodes:
 			for j in all_val_nodes:
 				if j <= i:
 					continue
-				if output_main_package(enames_inv_train[i]) != output_main_package(enames_inv_train[j]): #i and j are in different main branches
-					continue
+				if opt.same_main_package:
+					if output_main_package(enames_inv_train[i]) != output_main_package(enames_inv_train[j]): #i and j are in different main branches
+						continue
 				dist_ij = nx.shortest_path_length(G_train, source=convert_close_to_noclose[i], target=convert_close_to_noclose[j])
 				shortest_path_dict[i][j] = dist_ij
 			#shortest_path_dict[train_idx_i][train_idx_i] = 0
