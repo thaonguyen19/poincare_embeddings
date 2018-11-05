@@ -1,33 +1,10 @@
-* Poincaré Embeddings for Learning Hierarchical Representations
 
-PyTorch implementation of [[https://papers.nips.cc/paper/7213-poincare-embeddings-for-learning-hierarchical-representations][Poincaré Embeddings for Learning Hierarchical Representations]]
+* Poincaré Embeddings for Learning Hierarchical Representations of Modules in Common Python Libraries
+This repo examines the application of poincaré embedding in encoding the similarity between python modules (e.g. those found in common libraries such as NumPy, SciPy, Sklearn), measured by the shortest path in the tree constructed based on the hierarchy of these modules, crawled from Python documentation. Modules with the same name, e.g. "scipy.stats._continuous_distns.lomax_gen.fit" and "sklearn.linear_model.base.LinearModel.fit", are distinguished as different nodes in the tree. During training (multithreaded async SGD), edges connecting modules with the same name are optionally added, with the assumption that the same name signals similar functionality (e.g. estimating the fit of data to a model/ distribution). To evaluate the effectiveness of the representation learned, Pearson correlation is computed for embedding distance versus shortest path distance in the original tree, between nodes that are under the same library (e.g. Numpy).
+
+** Adapted from PyTorch implementation of [[https://papers.nips.cc/paper/7213-poincare-embeddings-for-learning-hierarchical-representations][Poincaré Embeddings for Learning Hierarchical Representations]] by Facebook AI Research
 
 [[file:wn-nouns.jpg]]
-
-** Example: Embedding WordNet Mammals
-To embed the transitive closure of the WordNet mammals subtree, first generate the data via
-#+BEGIN_SRC sh
-  cd wordnet
-  make
-#+END_SRC
-This will generate the transitive closure of the full noun hierarchy as well as of the mammals subtree of WordNet. 
-
-To embed the mammals subtree in the reconstruction setting (i.e., without missing data), go to the /root directory/ of the project and run
-#+BEGIN_SRC sh
-  NTHREADS=2 ./train-mammals.sh
-#+END_SRC
-This shell script includes the appropriate parameter settings for the mammals subtree and saves the trained model as =mammals.pth=. 
-
-An identical script to learn embeddings of the entire noun hierarchy is located at =train-nouns.sh=. This script contains the hyperparameter setting to reproduce the results for 10-dimensional embeddings of [[https://papers.nips.cc/paper/7213-poincare-embeddings-for-learning-hierarchical-representations][(Nickel & Kiela, 2017)]]. The hyperparameter setting to reproduce the MAP results are provided as comments in the script.
-
-The embeddings are trained via multithreaded async SGD. In the example above, the number of threads is set to a conservative setting (=NHTREADS=2=) which should run well even on smaller machines. On machines with many cores, increase =NTHREADS= for faster convergence.
-
-** Installation
-Simply clone this repository via
-#+BEGIN_SRC sh
-  git clone https://github.com/facebookresearch/poincare-embeddings.git
-  cd poincare-embeddings
-#+END_SRC
 
 ** Dependencies
 - Python 3 with NumPy
